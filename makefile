@@ -10,11 +10,17 @@ CPPFLAGS :=
 
 all: common server
 
-server: $(SERVER_OBJ_FILES)
+server: $(SERVER_OBJ_FILES)
+	@echo ECHO: mkdir -p $(BIN_DIR)
+	@echo ECHO: $(CXX) $(LDFLAGS) -o $(BIN_DIR)/doforward_server $^
+	
 	mkdir -p $(BIN_DIR)
 	$(CXX) $(LDFLAGS) -o $(BIN_DIR)/doforward_server $^
 
-$(SERVER_OBJ_DIR)/%.o: $(SERVER_SRC_DIR)/%.cpp
+$(SERVER_OBJ_DIR)/%.o: $(SERVER_SRC_DIR)/%.cpp
+	@echo ECHO: mkdir -p $(SERVER_OBJ_DIR)
+	@echo ECHO: $(CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
+
 	mkdir -p $(SERVER_OBJ_DIR)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
 
