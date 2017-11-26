@@ -5,3 +5,5 @@ compiler:
 os:
 - linux
 script: make
+after_success:
+- coveralls
