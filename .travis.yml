@@ -1,11 +1,32 @@
-language: cpp
+language:
+  - cpp
+
 compiler:
-  - clang
   - gcc
+  - clang
+
 os:
   - linux
-before_install:
+
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+
+install:
   - pip install --user cpp-coveralls
-script: make
+
+script:
+  - mkdir build
+  - cd build
+  - ls ..
+  - cmake .. 
+  - make
+  - cd ..
+  - ./bin/server_tests
+
 after_success:
-  - coveralls
+  - coveralls --root .. -E ".*external.*" -E ".*CMakeFiles.*" -E ".*test/.*"
+
+notifications:
+  email: false

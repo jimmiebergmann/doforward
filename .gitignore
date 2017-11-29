@@ -1,8 +1,12 @@
 # Directories #
-obj
 lib
 bin
 doc
+build
+
+# Temporary
+*~
+*.tlog
 
 # Build
 *.exp
@@ -17,7 +21,6 @@ doc
 *.cbTemp
 *.depend
 *.log
-*.tlog
 *.ilk
 *.idb
 *.db
