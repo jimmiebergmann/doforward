@@ -22,7 +22,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 
 # Sources
-set(SERVER_BIN			source/bin/Server.cpp)
+set(SERVER_MAIN			source/mains/Server.cpp)
 set(SERVER_SOURCES		source/server/Balancer.cpp)
 set(SERVER_TESTS_SOURCES	test/server/ServerTests.cpp)
 
@@ -37,8 +37,8 @@ target_include_directories(	server_tests PUBLIC include/server)
 target_compile_options(		server_tests PUBLIC --coverage )
 
 # Server
-add_executable(server ${SERVER_SOURCES} ${SERVER_BIN})
-target_compile_definitions(	server PUBLIC ${CXX_COMPILER_FLAGS})
-target_include_directories(	server PUBLIC include/server)
+add_executable(doforward ${SERVER_SOURCES} ${SERVER_MAIN})
+target_compile_definitions(	doforward PUBLIC ${CXX_COMPILER_FLAGS})
+target_include_directories(	doforward PUBLIC include/server)
 
 
