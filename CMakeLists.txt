@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
-project (doforward)
+project (doforward_server_client)
 enable_language(C CXX)
 
 # Check for c++11 support
@@ -37,7 +37,8 @@ target_include_directories(	server_tests PUBLIC include/server)
 target_compile_options(		server_tests PUBLIC --coverage )
 
 # Server
-add_executable(doforward ${SERVER_SOURCES} ${SERVER_BIN})
-target_compile_definitions(	doforward PUBLIC ${CXX_COMPILER_FLAGS})
-target_include_directories(	doforward PUBLIC include/server)
+add_executable(server ${SERVER_SOURCES} ${SERVER_BIN})
+target_compile_definitions(	server PUBLIC ${CXX_COMPILER_FLAGS})
+target_include_directories(	server PUBLIC include/server)
+
 
