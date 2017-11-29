@@ -22,7 +22,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 
 # Sources
-set(SERVER_MAIN			source/mains/Server.cpp)
+set(SERVER_MAIN			source/mains/ServerApp.cpp)
 set(SERVER_SOURCES		source/server/Balancer.cpp)
 set(SERVER_TESTS_SOURCES	test/server/ServerTests.cpp)
 
