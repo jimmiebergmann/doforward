@@ -73,25 +73,25 @@
     <OutDir>..\..\bin\</OutDir>
     <IntDir>..\..\obj\x64\debug\tests\server\</IntDir>
     <TargetName>server_tests-x64-d</TargetName>
-    <IncludePath>..\..\include\server;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\include\server;..\..\include\common;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>..\..\bin\</OutDir>
     <IntDir>..\..\obj\x64\release\tests\server\</IntDir>
     <TargetName>server_tests-x64</TargetName>
-    <IncludePath>..\..\include\server;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\include\server;..\..\include\common;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>..\..\bin\</OutDir>
     <IntDir>..\..\obj\x86\release\tests\server\</IntDir>
     <TargetName>server_tests</TargetName>
-    <IncludePath>..\..\include\server;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\include\server;..\..\include\common;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>..\..\bin\</OutDir>
     <IntDir>..\..\obj\x86\debug\tests\server\</IntDir>
     <TargetName>server_tests-d</TargetName>
-    <IncludePath>..\..\include\server;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\include\server;..\..\include\common;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

@@ -1,21 +1,45 @@
 #include <Balancer.hpp>
+#include <Exception.hpp>
 
 namespace dof
 {
 
-	Balancer::Balancer() :
-		m_Value(100)
+	// Config class
+	Balancer::Config::Config()
+	{
+
+	}
+
+	void Balancer::Config::LoadFromFile(const std::string & filename)
+	{
+
+	}
+
+	bool Balancer::Config::SaveToFile(const std::string & path)
+	{
+		return false;
+	}
+
+
+
+	// Balancer class
+	Balancer::Balancer()
 	{
 	}
 
-	void Balancer::Set(const int value)
+	void Balancer::Run(Config & config)
 	{
-		m_Value = value;
+
 	}
 
-	int Balancer::Get() const
+	void Balancer::Stop()
 	{
-		return m_Value;
+
+	}
+
+	void Balancer::Finish()
+	{
+
 	}
 
 }

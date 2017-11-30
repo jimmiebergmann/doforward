@@ -80,25 +80,25 @@
     <OutDir>..\..\bin\</OutDir>
     <IntDir>..\..\obj\x64\debug\node\</IntDir>
     <TargetName>doforward_node-x64-d</TargetName>
-    <IncludePath>..\..\include\node;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\include\node;..\..\include\common;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>..\..\bin\</OutDir>
     <IntDir>..\..\obj\x64\release\node\</IntDir>
     <TargetName>doforward_node-x64</TargetName>
-    <IncludePath>..\..\include\node;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\include\node;..\..\include\common;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>..\..\bin\</OutDir>
     <IntDir>..\..\obj\x86\release\node\</IntDir>
     <TargetName>doforward_node</TargetName>
-    <IncludePath>..\..\include\node;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\include\node;..\..\include\common;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>..\..\bin\</OutDir>
     <IntDir>..\..\obj\x86\debug\node\</IntDir>
     <TargetName>doforward_node-d</TargetName>
-    <IncludePath>..\..\include\node;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\include\node;..\..\include\common;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

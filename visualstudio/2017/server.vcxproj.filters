@@ -18,9 +18,21 @@
     <ClCompile Include="..\..\source\mains\ServerApp.cpp">
       <Filter>mains</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\common\Exception.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\server\Node.cpp">
+      <Filter>server</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\server\Balancer.hpp">
+      <Filter>server</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\common\Exception.hpp">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\server\Node.hpp">
       <Filter>server</Filter>
     </ClInclude>
   </ItemGroup>

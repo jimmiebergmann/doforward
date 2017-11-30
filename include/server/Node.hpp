@@ -1,8 +1,7 @@
 #pragma once
 
 #include <string>
-#include <Node.hpp>
-#include <map>
+#include <thread>
 
 namespace dof
 {
@@ -13,7 +12,7 @@ namespace dof
 	*		 handle disconnections, gather statistics, etc...
 	*
 	*/
-	class Balancer
+	class Node
 	{
 
 	public:
@@ -27,9 +26,9 @@ namespace dof
 		*			server:
 		*				- max_connections: 256
 		*			nodes:
-		*				- 
+		*				-
 		*			api:
-		*				- port: 12345 
+		*				- port: 12345
 		*
 		*/
 		class Config
@@ -74,41 +73,12 @@ namespace dof
 		* @breif Default constructor.
 		*
 		*/
-		Balancer();
+		Node();
 
-		/**
-		* @breif 
-		*
-		* @param config Reference to configuration class.
-		*				If config is uninitialized(LoadFromFile has not been called or succeeded),
-		*				default configurations are used.
-		*
-		* @see Config for default configurations.
-		*
-		* @throw dof::Exception if initialization fails.
-		*
-		*/
-		void Run(Config & config);
-
-		/**
-		* @breif Stop the server.
-		*
-		* @see Finish
-		*
-		*/
-		void Stop();
-
-		/**
-		* @breif Function call to Finish() will lock the thread until Stop() is being called.
-		*
-		* @see Stop
-		*
-		*/
-		void Finish();
+		
 
 	private:
 
-		std::map<std::string, Node *> m_Nodes; ///< Map of 
 
 	};
 

@@ -4,9 +4,9 @@
 int main()
 {
 	dof::Balancer balancer;
-	balancer.Set(50);
+	//balancer.Set(50);
 
-	std::cout << "Balancer test: " << balancer.Get() << std::endl;
+	//std::cout << "Balancer test: " << balancer.Get() << std::endl;
 
 	return 0;
 }
