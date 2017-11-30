@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="server">
+      <UniqueIdentifier>{a9abdd79-27d4-4615-9d38-164e59c8555b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mains">
+      <UniqueIdentifier>{25d406b4-a341-40fc-b4e2-31f95badfef2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common">
+      <UniqueIdentifier>{34d21e1c-bff4-4ea2-a613-c32ee76e832a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\source\server\Balancer.cpp">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mains\ServerApp.cpp">
+      <Filter>mains</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\include\server\Balancer.hpp">
+      <Filter>server</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

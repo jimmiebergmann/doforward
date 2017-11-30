@@ -1,9 +1,9 @@
-#include <Node.hpp>
+#include <Connector.hpp>
 
 namespace dof
 {
 
-	Node::Node()
+	Connector::Connector()
 	{
 	}
 

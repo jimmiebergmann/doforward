@@ -1,8 +1,8 @@
-#include <Node.hpp>
+#include <Connector.hpp>
 
 int main()
 {
-	dof::Node node;	
+	dof::Connector connector;
 
 	return 0;
 }

@@ -3,12 +3,12 @@
 namespace dof
 {
 
-	class Node
+	class Connector
 	{
 
 	public:
 
-		Node();
+		Connector();
 
 
 	};

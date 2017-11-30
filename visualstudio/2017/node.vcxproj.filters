@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="mains">
+      <UniqueIdentifier>{4f44c41a-bd2d-436b-bcd8-7c3a71a71b0b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="node">
+      <UniqueIdentifier>{1ffa6bec-f7a1-45bc-b286-cf1e79cbec6a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common">
+      <UniqueIdentifier>{e74d3c81-6d20-4185-9ed7-c045f9844861}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\source\mains\NodeApp.cpp">
+      <Filter>mains</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\node\Connector.cpp">
+      <Filter>node</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\include\node\Connector.hpp">
+      <Filter>node</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

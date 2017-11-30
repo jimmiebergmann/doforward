@@ -24,6 +24,8 @@ build
 *.ilk
 *.idb
 *.db
+.vs
+
 
 # Prerequisites
 *.d
