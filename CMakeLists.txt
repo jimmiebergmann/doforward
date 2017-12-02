@@ -33,12 +33,12 @@ set(SERVER_TESTS_SOURCES	test/server/ServerTests.cpp)
 add_executable(server_tests ${SERVER_SOURCES} ${SERVER_TESTS_SOURCES})
 target_link_libraries(		server_tests PUBLIC gcov)
 target_compile_definitions(	server_tests PUBLIC ${CXX_COMPILER_FLAGS})
-target_include_directories(	server_tests PUBLIC include/server)
+target_include_directories(	server_tests PUBLIC include/server include/common)
 target_compile_options(		server_tests PUBLIC --coverage )
 
 # Server
 add_executable(doforward ${SERVER_SOURCES} ${SERVER_MAIN})
 target_compile_definitions(	doforward PUBLIC ${CXX_COMPILER_FLAGS})
-target_include_directories(	doforward PUBLIC include/server)
+target_include_directories(	doforward PUBLIC include/server include/common)
 
 

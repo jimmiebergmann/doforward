@@ -18,9 +18,18 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\source\common\Exception.cpp" />
+    <ClCompile Include="..\..\source\common\Yaml.cpp" />
+    <ClCompile Include="..\..\test\common\CommonTests.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\include\common\Exception.hpp" />
+    <ClInclude Include="..\..\include\common\Yaml.hpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{6380AF67-1470-413E-A2BD-5012962C075B}</ProjectGuid>
+    <ProjectGuid>{515CA622-FDD6-4A98-9126-1E7BAE6CA3D3}</ProjectGuid>
     <RootNamespace>server</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
@@ -71,27 +80,27 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>..\..\bin\</OutDir>
-    <IntDir>..\..\obj\x64\debug\server\</IntDir>
-    <TargetName>doforward-x64-d</TargetName>
-    <IncludePath>..\..\include\server;..\..\include\common;$(IncludePath)</IncludePath>
+    <IntDir>..\..\obj\x64\debug\tests\common\</IntDir>
+    <TargetName>common_tests-x64-d</TargetName>
+    <IncludePath>..\..\include\common;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>..\..\bin\</OutDir>
-    <IntDir>..\..\obj\x64\release\server\</IntDir>
-    <TargetName>doforward-x64</TargetName>
-    <IncludePath>..\..\include\server;..\..\include\common;$(IncludePath)</IncludePath>
+    <IntDir>..\..\obj\x64\release\tests\common\</IntDir>
+    <TargetName>common_tests-x64</TargetName>
+    <IncludePath>..\..\include\common;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>..\..\bin\</OutDir>
-    <IntDir>..\..\obj\x86\release\server\</IntDir>
-    <TargetName>doforward</TargetName>
-    <IncludePath>..\..\include\server;..\..\include\common;$(IncludePath)</IncludePath>
+    <IntDir>..\..\obj\x86\release\tests\common\</IntDir>
+    <TargetName>common_tests</TargetName>
+    <IncludePath>..\..\include\common;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>..\..\bin\</OutDir>
-    <IntDir>..\..\obj\x86\debug\server\</IntDir>
-    <TargetName>doforward-d</TargetName>
-    <IncludePath>..\..\include\server;..\..\include\common;$(IncludePath)</IncludePath>
+    <IntDir>..\..\obj\x86\debug\tests\common\</IntDir>
+    <TargetName>common_tests-d</TargetName>
+    <IncludePath>..\..\include\common;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -135,30 +144,6 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\source\common\Exception.cpp" />
-    <ClCompile Include="..\..\source\common\Socket.cpp" />
-    <ClCompile Include="..\..\source\common\socket\TcpListener.cpp" />
-    <ClCompile Include="..\..\source\common\socket\TcpSocket.cpp" />
-    <ClCompile Include="..\..\source\common\Yaml.cpp" />
-    <ClCompile Include="..\..\source\mains\ServerApp.cpp" />
-    <ClCompile Include="..\..\source\server\Balancer.cpp" />
-    <ClCompile Include="..\..\source\server\Group.cpp" />
-    <ClCompile Include="..\..\source\server\Node.cpp" />
-    <ClCompile Include="..\..\source\server\Service.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\include\common\Exception.hpp" />
-    <ClInclude Include="..\..\include\common\Safe.hpp" />
-    <ClInclude Include="..\..\include\common\Socket.hpp" />
-    <ClInclude Include="..\..\include\common\socket\TcpListener.hpp" />
-    <ClInclude Include="..\..\include\common\socket\TcpSocket.hpp" />
-    <ClInclude Include="..\..\include\common\Yaml.hpp" />
-    <ClInclude Include="..\..\include\server\Balancer.hpp" />
-    <ClInclude Include="..\..\include\server\Group.hpp" />
-    <ClInclude Include="..\..\include\server\Node.hpp" />
-    <ClInclude Include="..\..\include\server\Service.hpp" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

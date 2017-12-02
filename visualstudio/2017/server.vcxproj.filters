@@ -10,6 +10,9 @@
     <Filter Include="common">
       <UniqueIdentifier>{34d21e1c-bff4-4ea2-a613-c32ee76e832a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="common\socket">
+      <UniqueIdentifier>{10b3bb5f-3d2e-465b-bc37-f667744b3ebc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\server\Balancer.cpp">
@@ -24,6 +27,24 @@
     <ClCompile Include="..\..\source\server\Node.cpp">
       <Filter>server</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\server\Group.cpp">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\server\Service.cpp">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\common\Yaml.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\common\Socket.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\common\socket\TcpListener.cpp">
+      <Filter>common\socket</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\common\socket\TcpSocket.cpp">
+      <Filter>common\socket</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\server\Balancer.hpp">
@@ -34,6 +55,27 @@
     </ClInclude>
     <ClInclude Include="..\..\include\server\Node.hpp">
       <Filter>server</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\server\Group.hpp">
+      <Filter>server</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\server\Service.hpp">
+      <Filter>server</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\common\Safe.hpp">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\common\socket\TcpListener.hpp">
+      <Filter>common\socket</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\common\socket\TcpSocket.hpp">
+      <Filter>common\socket</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\common\Socket.hpp">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\common\Yaml.hpp">
+      <Filter>common</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,3 +1,28 @@
+/*
+* MIT License
+*
+* Copyright(c) 2017 Jimmie Bergmann
+*
+* Permission is hereby granted, free of charge, to any person obtaining a copy
+* of this software and associated documentation files(the "Software"), to deal
+* in the Software without restriction, including without limitation the rights
+* to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+* copies of the Software, and to permit persons to whom the Software is
+* furnished to do so, subject to the following conditions :
+*
+* The above copyright notice and this permission notice shall be included in all
+* copies or substantial portions of the Software.
+*
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
+* AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+* SOFTWARE.
+*
+*/
+
 #pragma once
 
 #include <string>
@@ -7,9 +32,7 @@ namespace dof
 {
 
 	/**
-	* @breif Main class of DoForward server.
-	*		 The balancer will load configurations, balance connections and packets,
-	*		 handle disconnections, gather statistics, etc...
+	* @breif 
 	*
 	*/
 	class Node
@@ -18,66 +41,18 @@ namespace dof
 	public:
 
 		/**
-		* @breif Configuration class of the balancer,
-		*		 including specifying nodes, protocols, ports, etc...
-		*
-		*		 Default configurations
-		*		 ---------------------------------------------------
-		*			server:
-		*				- max_connections: 256
-		*			nodes:
-		*				-
-		*			api:
-		*				- port: 12345
-		*
-		*/
-		class Config
-		{
-
-		public:
-
-			/**
-			* @breif Default constructor.
-			*
-			*/
-			Config();
-
-			/**
-			* @breif Load configs from yaml file.
-			*		 Missing configurations in the file will be set to default values.
-			*
-			* @param path Path of configuration file, including name.
-			*
-			* @throw dof::Exception on invalid file or configs.
-			*
-			*/
-			virtual void LoadFromFile(const std::string & path);
-
-			/**
-			* @breif Save current configurations to file.
-			*
-			* @param filename Path of configuration file, including name.
-			*
-			* @return True if valid path, else false.
-			*
-			*/
-			virtual bool SaveToFile(const std::string & path);
-
-		private:
-
-			// ...
-
-		};
-
-		/**
 		* @breif Default constructor.
 		*
 		*/
 		Node();
 
-		
-
 	private:
+
+		/**
+		* @breif Copy constructor.
+		*
+		*/
+		Node(const Node & node);
 
 
 	};

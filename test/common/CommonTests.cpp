@@ -23,13 +23,38 @@
 *
 */
 
-#include <Connector.hpp>
 
-namespace dof
+#include <Yaml.hpp>
+#include <iostream>
+#include <iostream>
+
+using namespace dof;
+
+int main()
 {
+	std::string file =
+		"4444"
+		"123"
+		"33";
 
-	Connector::Connector()
-	{
-	}
 
+	Yaml::Value root;
+
+	root["Foo"] = 123;
+	root["Bar"] = "bar";
+
+/*
+	Yaml::Object root;
+
+	Yaml::Value & val = root["test"]["test"];
+	val = Yaml::Object();
+	val["test"]
+
+	//val["cool"] = Yaml::Object();
+
+	//std::cout << b.Get() << std::endl;
+	
+		*/
+	
+	return 0;
 }
