@@ -33,15 +33,23 @@ using namespace dof;
 int main()
 {
 	std::string file =
-		"4444"
-		"123"
-		"33";
+		"    \n"
+		"\n"
+		"# test!    \n"
+		"  #test  \n"
+		"   \n"
+		"test_1: 123\n"
+		"test_2: 100.0\n"
+		"test_3: Test\n"
+		"test_4: \"Hello world\"\n"
+		"test_5: 'Hello world'\n"
+		"test_5: \"Hello\\\"world\"\n"
+		"test_5: 'Hello\\'world'\n";
 
 
 	Yaml::Value root;
-
-	root["Foo"] = 123;
-	root["Bar"] = "bar";
+	Yaml::Reader reader;
+	reader.ReadFromMemory(file.c_str(), file.size(), root);
 
 /*
 	Yaml::Object root;

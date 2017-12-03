@@ -1,5 +1,7 @@
 #include <Yaml.hpp>
 #include <Exception.hpp>
+#include <fstream>
+
 
 namespace dof
 {
@@ -179,7 +181,7 @@ namespace dof
 				auto it = m_Data.ObjectData->find(key);
 				if (it != m_Data.ObjectData->end())
 				{
-					(*it->second).CopyData(value);
+					(*it->second).CopyValue(value);
 					return;
 				}
 			}
@@ -251,7 +253,7 @@ namespace dof
 
 		Value & Value::operator = (const Value & value)
 		{
-			CopyData(value);
+			CopyValue(value);
 			return *this;
 		}
 
@@ -313,7 +315,7 @@ namespace dof
 			throw Exception(Exception::InvalidPointer, "This function should not been accessed.");
 		}
 
-		void Value::CopyData(const Value & value)
+		void Value::CopyValue(const Value & value)
 		{
 			ClearData();
 
@@ -390,6 +392,247 @@ namespace dof
 			}
 
 			m_Type = Null;
+		}
+
+
+
+		// Reader class
+		void Reader::ReadFromFile(const std::string & filename, Value & value)
+		{
+			std::ifstream file(filename, std::ifstream::binary);
+			if (file.is_open() == false)
+			{
+				throw Exception(Exception::CannotOpen, "Cannot open file.");
+			}
+
+			file.seekg(0, file.end);
+			int fileSize = file.tellg();
+			file.seekg(0, file.beg);
+
+			char * pData = new char[fileSize];
+			file.read(pData, fileSize);
+			file.close();
+
+			ReadFromMemory(pData, fileSize, value);
+			delete pData;
+		}
+
+		void Reader::ReadFromMemory(const char * data, const int dataSize, Value & value)
+		{
+			std::stringstream ss(std::string(data, dataSize));
+			ReadFromStream(ss, value);
+		}
+
+		void Reader::ReadFromStream(std::stringstream & stream, Value & value)
+		{
+			value.ClearData();
+
+			while (m_ValueStack.size())
+			{
+				m_ValueStack.pop();
+			}
+			m_pStream = &stream;
+			m_pCurrentValue = &value;
+			m_CurrentLevel = 0;
+			m_StartLevel = 0;
+			
+			std::string line = "";
+
+			if (FindStart() == false)
+			{
+				return;
+			}
+			m_CurrentLevel = m_StartLevel;
+			m_ValueStack.push({ m_CurrentLevel, &value });
+
+			// Go through each line in stream.
+			while (std::getline(*m_pStream, line))
+			{
+				if (line.find_first_of('\t') != std::string::npos)
+				{
+					throw Exception(Exception::ValidationError, "Tabs are not allowed in yaml.");
+				}
+				int level = line.find_first_not_of(' ');
+				if (level == std::string::npos || line[level] == '#')
+				{
+					continue;
+				}
+				
+				// Elements of same level, do not touch stack.
+				if (level == m_CurrentLevel)
+				{
+					ParseLine(line);
+					continue;
+				}
+
+				// Level is less, pop stack
+				if (level < m_CurrentLevel)
+				{
+					std::pair<int, Value *> stackItem = {-1, nullptr};
+
+					bool correctLevel = false;
+					while (m_ValueStack.size() > 1)
+					{
+						m_ValueStack.pop();
+						stackItem = m_ValueStack.top();
+						if (level < stackItem.first)
+						{
+							continue;
+						}
+
+						if (level == stackItem.first)
+						{
+							correctLevel = true;
+						}
+						break;
+					}
+					if (correctLevel == false && stackItem.first != m_StartLevel)
+					{
+						throw Exception(Exception::ValidationError, "Current line position is less than start position.");
+					}
+					
+					m_CurrentLevel = level;
+					m_pCurrentValue = stackItem.second;
+					ParseLine(line);
+					continue;
+				}
+				// level is larger, push stack.
+				if (level > m_CurrentLevel)
+				{
+					//Value
+
+					continue;
+				}
+
+			}
+		}
+
+		bool Reader::FindStart()
+		{
+			int lastPos = 0;
+			int currentPos = 0;
+			int level = 0;
+			std::string line = "";
+
+			while (std::getline(*m_pStream, line))
+			{
+				currentPos = m_pStream->tellg();
+
+				if (line.find_first_of('\t') != std::string::npos)
+				{
+					throw Exception(Exception::ValidationError, "Tabs are not allowed in yaml.");
+				}
+				level = line.find_first_not_of(' ');
+				if (level == std::string::npos || line[level] == '#')
+				{
+					lastPos = currentPos;
+					continue;
+				}
+
+				m_pStream->seekg(lastPos, std::stringstream::beg);
+				m_StartLevel = level;
+				return true;
+			}
+
+			return false;
+		}
+
+		void Reader::ParseLine(const std::string & line)
+		{
+			if (m_pCurrentValue->m_Type == Value::Null)
+			{
+				if (line[m_CurrentLevel] == '-' || line[m_CurrentLevel] == '[')
+				{
+					m_pCurrentValue->m_Type = Value::List;
+					m_pCurrentValue->m_Data.ListData = new std::list<Value *>;
+					ParseList(line);
+					return;
+				}
+
+				m_pCurrentValue->m_Type = Value::Object;
+				m_pCurrentValue->m_Data.ObjectData = new std::map<std::string, Value *>;
+				ParseObject(line);
+				return;
+			}
+
+			if (m_pCurrentValue->m_Type == Value::List)
+			{
+				ParseList(line);
+				return;
+			}
+			if (m_pCurrentValue->m_Type == Value::Object)
+			{
+				ParseObject(line);
+				return;
+			}
+		}
+
+		void Reader::ParseList(const std::string & line)
+		{
+
+		}
+
+		void Reader::ParseObject(const std::string & line)
+		{
+			int keyEnd = line.find_first_of(':', m_CurrentLevel);
+			if (keyEnd == std::string::npos)
+			{
+				throw Exception(Exception::ValidationError, "Could not find end of key name of object.");
+			}
+
+			const std::string key = TrimSpaces(line.substr(m_CurrentLevel, keyEnd - m_CurrentLevel));
+			const std::string value = TrimSpaces(line.substr(keyEnd + 1, line.size() - keyEnd));
+
+			if (value.size() == 0)
+			{
+				throw Exception(Exception::ValidationError, "What to do here? Is this a start of a list?");
+			}
+
+			auto numberSearch = value.find_first_not_of("0123456789.");
+			if (numberSearch == std::string::npos)
+			{
+				std::stringstream ss(value);
+
+				// Integer
+				numberSearch = value.find_first_of('.');
+				if (numberSearch == std::string::npos)
+				{
+					long long integer = 0LL;
+					ss >> integer;
+					(*m_pCurrentValue)[key] = integer;
+					return;
+				}
+				// Float
+				else
+				{
+					double floatingPoint = 0.0f;
+					ss >> floatingPoint;
+					(*m_pCurrentValue)[key] = floatingPoint;
+					return;
+				}
+			}
+
+			// String
+			(*m_pCurrentValue)[key] = value;
+		}
+
+		std::string Reader::TrimSpaces(const std::string & text)
+		{
+			std::string finalText = text;
+
+			auto firstNot = finalText.find_first_not_of(' ');
+			if (firstNot != std::string::npos && firstNot != 0)
+			{
+				finalText = finalText.substr(firstNot, text.size() - firstNot);
+			}
+
+			auto lastNot = finalText.find_last_not_of(' ');
+			if (lastNot != std::string::npos && lastNot != finalText.size() - 1)
+			{
+				finalText = finalText.substr(0, lastNot + 1);
+			}
+
+			return finalText;
 		}
 
 	}

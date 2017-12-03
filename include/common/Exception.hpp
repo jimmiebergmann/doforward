@@ -48,7 +48,9 @@ namespace dof
 		enum eCode
 		{
 			InvalidType,
-			InvalidPointer
+			InvalidPointer,
+			CannotOpen,
+			ValidationError
 		};
 
 		/**

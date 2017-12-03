@@ -28,6 +28,8 @@
 #include <map>
 #include <list>
 #include <string>
+#include <sstream>
+#include <stack>
 
 namespace dof
 {
@@ -45,7 +47,6 @@ namespace dof
 
 		/**
 		* @breif YAML value class.
-		*		 All values has associated key types.
 		*		 Use Reader or Writer function de/serialization.
 		*
 		* @see Reader
@@ -103,6 +104,8 @@ namespace dof
 			};
 
 			friend class Iterator;
+			friend class Reader;
+			friend class Writer;
 
 			/**
 			* @breif Enumeration of all possible value types.
@@ -233,8 +236,16 @@ namespace dof
 			*/
 			Value(const eType type);
 
-			void CopyData(const Value & value);
+			/**
+			* @breif Copy value data from another value.
+			*
+			*/
+			void CopyValue(const Value & value);
 
+			/**
+			* @breif Delete all allocated memory for this value.
+			*
+			*/
 			void ClearData();
 
 			/**
@@ -251,9 +262,45 @@ namespace dof
 				std::map<std::string, Value *> *	ObjectData;
 			};
 
-			eType	m_Type;
+			eType	m_Type; ///< Type of value.
 			Data	m_Data; ///< Data union.
 
+		};
+
+
+		/**
+		* @breif YAML reader class.
+		*		 Use Reader or Writer function de/serialization.
+		*
+		*/
+		class Reader
+		{
+
+		public:
+
+			void ReadFromFile(const std::string & filename, Value & value);
+
+			void ReadFromMemory(const char * data, const int dataSize, Value & value);
+
+			void ReadFromStream(std::stringstream & stream, Value & value);
+
+		private:
+
+			bool FindStart();
+
+			void ParseLine(const std::string & line);
+
+			void ParseList(const std::string & line);
+
+			void ParseObject(const std::string & line);
+
+			std::string TrimSpaces(const std::string & text);
+
+			std::stack<std::pair<int, Value *>> m_ValueStack;
+			std::stringstream *					m_pStream;
+			Value *								m_pCurrentValue;
+			int									m_CurrentLevel;
+			int									m_StartLevel;
 
 		};
 
