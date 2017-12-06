@@ -47,10 +47,22 @@ int main()
 		"test_5: 'Hello\\'world'\n";
 
 
-	Yaml::Value root;
+	Yaml::Scalar scalar;
+
+	scalar.GetNode() = "test";
+
+
+	scalar.GetNode() = 123;
+
+	auto val = scalar.Value<std::string>();
+
+	int b = 5;
+
+
+	/*Yaml::Value root;
 	Yaml::Reader reader;
 	reader.ReadFromMemory(file.c_str(), file.size(), root);
-
+	*/
 /*
 	Yaml::Object root;
 

@@ -23,6 +23,13 @@
 *
 */
 
+
+/*
+
+YAML documentation: http://www.yaml.org/spec/current.html#id2502325
+
+*/
+
 #pragma once
 
 #include <map>
@@ -30,6 +37,7 @@
 #include <string>
 #include <sstream>
 #include <stack>
+#include <exception>
 
 namespace dof
 {
@@ -45,67 +53,43 @@ namespace dof
 	namespace Yaml
 	{
 
+		class Node;
+		class Scalar;
+		class Sequence;
+		class Mapping;
+
+		class ParsingError : public std::exception
+		{
+
+		public:
+
+			ParsingError(const std::string & message);
+
+		};
+
+		class InternalError : public std::exception
+		{
+
+		public:
+
+			InternalError(const std::string & message);
+
+		};
+
+
 		/**
-		* @breif YAML value class.
-		*		 Use Reader or Writer function de/serialization.
+		* @breif YAML node class.
 		*
 		* @see Reader
 		* @see Writer
 		*
 		*/
-		class Value
+		class Node
 		{
 
 		public:
-
-			class Iterator
-			{
-
-			public:
-
-				friend class Value;
-
-				enum eType
-				{
-					Null,
-					List,
-					Object
-				};
-
-				Iterator();
-
-				bool operator == (const Iterator & iterator);
-
-				bool operator != (const Iterator & iterator);
-
-				Iterator & operator ++ ();
-
-				Iterator & operator -- ();
-
-				Value & operator * ();
-				
-			private:
-
-				typedef std::list<Value *>::iterator ListIterator;
-				typedef std::map<std::string, Value *>::iterator ObjectIterator;
-
-				Iterator(ListIterator & iterator);
-				Iterator(ObjectIterator & iterator);
-
-				union IteratorData
-				{
-					ListIterator *		List;
-					ObjectIterator *	Object;
-				};
-
-				eType			m_Type;
-				IteratorData	m_Iterator;
-
-			};
-
-			friend class Iterator;
-			friend class Reader;
-			friend class Writer;
+			
+			friend class Scalar;
 
 			/**
 			* @breif Enumeration of all possible value types.
@@ -113,159 +97,336 @@ namespace dof
 			*/
 			enum eType
 			{
-				Null,
-				String,
-				Integer,
-				Float,
-				List,
-				Object
+				NullType,
+				ScalarType,
+				SequenceType,
+				MappingType
 			};
 
 			/**
 			* @breif Default constructor.
 			*
 			*/
-			Value();
+			Node(const eType type = NullType);
 
 			/**
 			* @breif Destructor.
 			*
 			*/
-			~Value();
+			~Node();
+
+			bool IsNull() const;
+
+			bool IsScalar() const;
+
+			bool IsSequence() const;
+
+			bool IsMapping() const;
+
+			Scalar & AsScalar() const;
+
+			template<class T>
+			T Value() const;
+
+			Node & operator = (const std::string & string);
+			Node & operator = (const int number);
+			Node & operator = (const long long number);
+			Node & operator = (const float number);
+			Node & operator = (const double number);
+
+
+			//Node & operator [](const int & index);
+			//Node & operator [](const std::string & string);
+			
+
+		private:
 
 			/**
 			* @breif Copy constructor.
 			*
 			*/
-			Value(const Value & value);
+			Node(const Node & value);
 
-			/**
-			* @breif Get type of value.
-			*
-			*/
-			eType GetType() const;
+			Node(Scalar * scalar);
 
-			/**
-			* @breif Get type of value.
-			*
-			* @return 0 if type = Number.
-			*		  Length of string if type = String.
-			*		  Size of list if type = List.
-			*		  Count of values if type = Object.
-			*
-			*/
-			int GetSize() const;
+			eType	m_Type;
+			Node *	m_pChild;
+			Node *	m_pParent;
+			void *	m_pDataItem;
 
-			/**
-			* @breif Push value to front of list.
-			*
-			*/
-			void PushFront(const Value & value);
+		};
 
-			/**
-			* @breif Push value to back of list.
-			*
-			*/
-			void PushBack(const Value & value);
+		/**
+		* @breif YAML scalar class.
+		*
+		*/
+		class Scalar
+		{
 
-			/**
-			* @breif Insert value with given key.
-			*
-			*/
-			void Insert(const std::string & key, const Value & value);
+		public:
 
-			/**
-			* @breif Erase object with an key.
-			*
-			*/
-			Iterator Erase(const std::string & key);
+			friend class Node;
 
-			/**
-			* @breif Erase via iterator. Used by lists or objects.
-			*
-			*/
-			Iterator Erase(Iterator & iterator);
+			Scalar();
 
-			/**
-			* @breif Get begining of iterator.
-			*
-			*/
-			Iterator Begin() const;
+			Scalar(const Scalar & scalar);
 
-			/**
-			* @breif Get ending of iterator.
-			*
-			*/
-			Iterator End() const;
+			Scalar(const std::string & string);
+			Scalar(const int number);
+			Scalar(const long long number);
+			Scalar(const float number);
+			Scalar(const double number);
 
-			/**
-			* @breif Assignment operators.
-			*
-			* @param value Copy another value and all child values to value.
-			* @param string Assign string to value.
-			* @param number Assign number to value.
-			*
-			* @return Reference to value. Null value if already assigned once.
-			*
-			*/
-			Value & operator = (const Value & value);
-			Value & operator = (const std::string & string);
-			Value & operator = (const int number);
-			Value & operator = (const long long number);
-			Value & operator = (const double number);
+			~Scalar();
 
-			/**
-			* @breif Access operators.
-			*
-			* @param string Access object by key name.
-			* @param index Access list item by index.
-			*
-			* @return Reference to value on success, else Null value.
-			*
-			*/
-			Value & operator [] (const std::string & key);
+			Node & GetNode() const;
+
+			template<class T>
+			T Value() const;
 
 		private:
 
-			/**
-			* @breif Constructor.
-			*		 Sets value type.
-			*
-			* @param type Type of value.
-			*
-			*/
-			Value(const eType type);
+			Scalar(Node * node);
 
-			/**
-			* @breif Copy value data from another value.
-			*
-			*/
-			void CopyValue(const Value & value);
-
-			/**
-			* @breif Delete all allocated memory for this value.
-			*
-			*/
-			void ClearData();
-
-			/**
-			* @breif Union containing data.
-			*		 Size of 8 byte.
-			*
-			*/
-			union Data
-			{
-				long long							IntegerData;
-				double								FloatData;
-				std::string *						StringData;
-				std::list<Value *> *				ListData;
-				std::map<std::string, Value *> *	ObjectData;
-			};
-
-			eType	m_Type; ///< Type of value.
-			Data	m_Data; ///< Data union.
+			Node *		m_pNode;
+			std::string m_Value;
 
 		};
+
+
+
+		/**
+		* @breif Static declarations.
+		*
+		*/
+		static Node		EmptyNode;
+		static Scalar	EmptyScalar;
+
+
+		/**
+		*	Exception implementations.
+		*/
+		ParsingError::ParsingError(const std::string & message) :
+			std::exception(message.c_str())
+		{
+		}
+
+		InternalError::InternalError(const std::string & message) :
+			std::exception(message.c_str())
+		{
+		}
+
+
+		/**
+		*	Node implementation.
+		*/
+		Node::Node(const eType type) :
+			m_Type(type),
+			m_pParent(nullptr),
+			m_pChild(nullptr),
+			m_pDataItem(nullptr)
+		{
+			if (m_Type == ScalarType)
+			{
+				m_pDataItem = new Scalar(this);
+			}
+		}
+
+		Node::~Node()
+		{
+		}
+
+		bool Node::IsNull() const
+		{
+			return m_Type == NullType;
+		}
+
+		bool Node::IsScalar() const
+		{
+			return m_Type == ScalarType;
+		}
+
+		bool Node::IsSequence() const
+		{
+			return m_Type == SequenceType;
+		}
+
+		bool Node::IsMapping() const
+		{
+			return m_Type == MappingType;
+		}
+
+		Scalar & Node::AsScalar() const
+		{
+			if (m_pDataItem == nullptr || m_Type != ScalarType)
+			{
+				EmptyScalar.m_pNode = nullptr;
+				EmptyScalar.m_Value = "";
+				return EmptyScalar;
+			}
+			return *static_cast<Scalar *>(m_pDataItem);
+		}
+
+		template<class T>
+		T Node::Value() const
+		{
+			if (m_pDataItem == nullptr || m_Type != ScalarType)
+			{
+				return static_cast<T>(0);
+			}
+
+			Scalar * pScalar = static_cast<Scalar *>(m_pDataItem);
+
+			return pScalar->Value<T>();
+		}
+
+		Node & Node::operator = (const std::string & string)
+		{
+			Scalar * pScalar = nullptr;
+
+			if (m_Type != ScalarType)
+			{
+				if (m_pDataItem != nullptr)
+				{
+					delete m_pDataItem;
+				}
+
+				m_Type = ScalarType;
+				pScalar = new Scalar(this);
+				m_pDataItem = pScalar;
+			}
+			else
+			{
+				pScalar = static_cast<Scalar *>(m_pDataItem);
+			}
+
+			pScalar->m_Value = string;
+			return *this;
+		}
+
+		Node & Node::operator = (const int number)
+		{
+			return *this = std::to_string(number);
+		}
+
+		Node & Node::operator = (const long long number)
+		{
+			return *this = std::to_string(number);
+		}
+
+		Node & Node::operator = (const float number)
+		{
+			return *this = std::to_string(number);
+		}
+			
+		Node & Node::operator = (const double number)
+		{
+			return *this = std::to_string(number);
+		}
+
+		Node::Node(const Node & value)
+		{
+			throw InternalError("Not supporting Node copy yet.");
+		}
+
+		Node::Node(Scalar * scalar) :
+			m_Type(ScalarType),
+			m_pParent(nullptr),
+			m_pChild(nullptr),
+			m_pDataItem(scalar)
+		{
+			if (m_pDataItem == nullptr)
+			{
+				throw InternalError("Scalar is nullptr, passed to node constructor.");
+			}
+		}
+		
+
+
+		/**
+		*	Scalar implementation.
+		*/
+		Scalar::Scalar() :
+			m_pNode(new Node(this)),
+			m_Value("")
+		{
+		}
+
+		Scalar::Scalar(const Scalar & scalar) :
+			m_Value(scalar.m_Value)
+		{
+		}
+
+		Scalar::Scalar(const std::string & string) :
+			m_pNode(new Node(this))
+		{
+			m_Value = string;
+		}
+		Scalar::Scalar(const int number) :
+			m_pNode(new Node(this))
+		{
+			m_Value = std::to_string(number);
+		}
+
+		Scalar::Scalar(const long long number) :
+			m_pNode(new Node(this))
+		{
+			m_Value = std::to_string(number);
+		}
+
+		Scalar::Scalar(const float number) :
+			m_pNode(new Node(this))
+		{
+			m_Value = std::to_string(number);
+		}
+
+		Scalar::Scalar(const double number) :
+			m_pNode(new Node(this))
+		{
+			m_Value = std::to_string(number);
+		}
+
+		Scalar::~Scalar()
+		{
+
+		}
+
+		Node & Scalar::GetNode() const
+		{
+			if (m_pNode == nullptr)
+			{
+				return EmptyNode;
+			}
+			return *m_pNode;
+		}
+
+		template<class T>
+		T Scalar::Value() const
+		{
+			std::stringstream ss(m_Value);
+			T value;
+			ss >> value;
+			if (ss.fail())
+			{
+				return static_cast<T>(0);
+			}
+			return value;
+		}
+
+		Scalar::Scalar(Node * node) :
+			m_pNode(node),
+			m_Value("")
+		{
+			if (m_pNode == nullptr)
+			{
+				throw InternalError("Node is nullptr, passed to scalar constructor.");
+			}
+		}
+		
+
+
+
+
 
 
 		/**
@@ -273,7 +434,7 @@ namespace dof
 		*		 Use Reader or Writer function de/serialization.
 		*
 		*/
-		class Reader
+		/*class Reader
 		{
 
 		public:
@@ -303,7 +464,7 @@ namespace dof
 			int									m_StartLevel;
 
 		};
-
+		*/
 	}
 
 }
