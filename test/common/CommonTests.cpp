@@ -26,7 +26,6 @@
 
 #include <Yaml.hpp>
 #include <iostream>
-#include <iostream>
 
 using namespace dof;
 
@@ -58,11 +57,15 @@ int main()
 
 	int b = 5;
 
+	std::cout << "Hellooooo!" << std::endl;
 
-	/*Yaml::Value root;
+
+
+/*  Yaml::Value root;
 	Yaml::Reader reader;
 	reader.ReadFromMemory(file.c_str(), file.size(), root);
-	*/
+*/
+
 /*
 	Yaml::Object root;
 
@@ -73,8 +76,7 @@ int main()
 	//val["cool"] = Yaml::Object();
 
 	//std::cout << b.Get() << std::endl;
-	
-		*/
-	
+*/
+
 	return 0;
 }

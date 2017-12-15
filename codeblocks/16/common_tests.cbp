@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="common_tests" />
+		<Option makefile_is_custom="1" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug_common_tests">
+				<Option output="../../bin/common_tests" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release_common_tests">
+				<Option output="../../bin/common_tests" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+		</Compiler>
+		<Unit filename="../../include/common/Exception.hpp" />
+		<Unit filename="../../include/common/Safe.hpp" />
+		<Unit filename="../../include/common/Socket.hpp" />
+		<Unit filename="../../include/common/Yaml.hpp" />
+		<Unit filename="../../source/common/Exception.cpp" />
+		<Unit filename="../../source/common/Socket.cpp" />
+		<Unit filename="../../source/common/Yaml.cpp" />
+		<Unit filename="../../test/common/CommonTests.cpp" />
+		<Extensions>
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

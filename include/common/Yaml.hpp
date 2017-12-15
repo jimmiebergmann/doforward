@@ -37,7 +37,7 @@ YAML documentation: http://www.yaml.org/spec/current.html#id2502325
 #include <string>
 #include <sstream>
 #include <stack>
-#include <exception>
+#include <Exception.hpp>
 
 namespace dof
 {
@@ -58,7 +58,7 @@ namespace dof
 		class Sequence;
 		class Mapping;
 
-		class ParsingError : public std::exception
+		class ParsingError : public Exception
 		{
 
 		public:
@@ -67,7 +67,7 @@ namespace dof
 
 		};
 
-		class InternalError : public std::exception
+		class InternalError : public Exception
 		{
 
 		public:
@@ -88,7 +88,7 @@ namespace dof
 		{
 
 		public:
-			
+
 			friend class Scalar;
 
 			/**
@@ -137,7 +137,7 @@ namespace dof
 
 			//Node & operator [](const int & index);
 			//Node & operator [](const std::string & string);
-			
+
 
 		private:
 
@@ -207,12 +207,12 @@ namespace dof
 		*	Exception implementations.
 		*/
 		ParsingError::ParsingError(const std::string & message) :
-			std::exception(message.c_str())
+			Exception(Exception::Yaml, message)
 		{
 		}
 
 		InternalError::InternalError(const std::string & message) :
-			std::exception(message.c_str())
+			Exception(Exception::Yaml, message)
 		{
 		}
 
@@ -318,7 +318,7 @@ namespace dof
 		{
 			return *this = std::to_string(number);
 		}
-			
+
 		Node & Node::operator = (const double number)
 		{
 			return *this = std::to_string(number);
@@ -340,7 +340,7 @@ namespace dof
 				throw InternalError("Scalar is nullptr, passed to node constructor.");
 			}
 		}
-		
+
 
 
 		/**
@@ -422,7 +422,7 @@ namespace dof
 				throw InternalError("Node is nullptr, passed to scalar constructor.");
 			}
 		}
-		
+
 
 
 

@@ -27,18 +27,26 @@ set(SERVER_SOURCES		source/server/Balancer.cpp)
 set(SERVER_TESTS_SOURCES	test/server/ServerTests.cpp)
 
 
-# Tests
+
+# Tests - Common
+file(GLOB common_files1 "source/common/*")
+file(GLOB common_files2 "test/common/*")
+set(COMMON_TESTS_SOURCES ${common_files1} ${common_files2})
+
+add_executable(			common_tests ${COMMON_TESTS_SOURCES})
+target_link_libraries(		common_tests PUBLIC gcov)
+target_compile_definitions(	common_tests PUBLIC ${CXX_COMPILER_FLAGS})
+target_include_directories(	common_tests PUBLIC include/common)
+target_compile_options(		common_tests PUBLIC --coverage )
 
 # Tests - Server
-add_executable(server_tests ${SERVER_SOURCES} ${SERVER_TESTS_SOURCES})
+add_executable(			server_tests ${SERVER_SOURCES} ${SERVER_TESTS_SOURCES})
 target_link_libraries(		server_tests PUBLIC gcov)
 target_compile_definitions(	server_tests PUBLIC ${CXX_COMPILER_FLAGS})
 target_include_directories(	server_tests PUBLIC include/server include/common)
 target_compile_options(		server_tests PUBLIC --coverage )
 
 # Server
-add_executable(doforward ${SERVER_SOURCES} ${SERVER_MAIN})
+add_executable(			doforward ${SERVER_SOURCES} ${SERVER_MAIN})
 target_compile_definitions(	doforward PUBLIC ${CXX_COMPILER_FLAGS})
 target_include_directories(	doforward PUBLIC include/server include/common)
-
-
