@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_workspace_file>
+	<Workspace title="doforward">
+		<Project filename="common_tests.cbp" />
+		<Project filename="node.cbp" />
+		<Project filename="server.cbp" />
+		<Project filename="server_tests.cbp" />
+	</Workspace>
+</CodeBlocks_workspace_file>

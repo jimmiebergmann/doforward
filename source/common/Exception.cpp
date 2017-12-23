@@ -29,14 +29,19 @@ namespace dof
 {
 
 	Exception::Exception(const eCode code, const std::string & message) :
-		std::exception(message.c_str()),
-		m_Code(code)
+        m_Code(code),
+		m_Message(message)
 	{
 	}
 
 	const std::string & Exception::GetMessage() const
 	{
-		return what();
+		return m_Message;
+	}
+
+	char const * Exception::what() const noexcept
+	{
+        return m_Message.c_str();
 	}
 
 	Exception::eCode Exception::GetCode() const

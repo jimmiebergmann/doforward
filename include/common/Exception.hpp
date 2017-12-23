@@ -32,7 +32,7 @@ namespace dof
 {
 
 	/**
-	* @breif Exception thrown by Doforward classes. 
+	* @breif Exception thrown by Doforward classes.
 	*
 	*/
 	class Exception : public std::exception
@@ -50,7 +50,8 @@ namespace dof
 			InvalidType,
 			InvalidPointer,
 			CannotOpen,
-			ValidationError
+			ValidationError,
+			Yaml
 		};
 
 		/**
@@ -71,6 +72,7 @@ namespace dof
 		*
 		*/
 		const std::string & GetMessage() const;
+        virtual char const *what() const noexcept;
 
 		/**
 		* @breif Get exception code.
@@ -82,8 +84,8 @@ namespace dof
 
 	private:
 
-		eCode m_Code; //< Exception code.
-
+		eCode       m_Code;     //< Exception code.
+        std::string m_Message;  //< Message of exception.
 	};
 
 }

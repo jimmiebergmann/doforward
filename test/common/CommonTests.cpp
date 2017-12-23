@@ -26,30 +26,24 @@
 
 #include <Yaml.hpp>
 #include <iostream>
-#include <iostream>
 
 using namespace dof::Yaml;
 
 int main()
 {
 	std::string file =
-		"    \n"
-		"\n"
-		" # test!    \n"
-		"  #test  \n"
-		"   \n"
-		"test_1: 123\n"
-		"test_2: 100.0\n"
-		"test_3: Test\n"
-		"test_4: \"Hello world\"\n"
-		"test_5: 'Hello world'\n"
-		"test_5: \"Hello\\\"world\"\n"
-		"test_5: 'Hello\\'world'\n";
+		"root1: 102 1\n"
+		"root2: 543 2\n";
+
 
 
 	Node root;
 	Reader reader;
-	reader.ReadFromString(file, root);
+	reader.ReadFromMemory(file, root);
+
+	std::cout << root["root1"].Value<std::string>() << std::endl;
+	std::cout << root["root2"].Value<int>() << std::endl;
+
 	/*root["foo"] = "bar";
 	root["hello"] = Scalar("world");
 	
@@ -60,23 +54,6 @@ int main()
 
 	int c = 5;*/
 
-
-	/*Yaml::Value root;
-	Yaml::Reader reader;
-	reader.ReadFromMemory(file.c_str(), file.size(), root);
-	*/
-/*
-	Yaml::Object root;
-
-	Yaml::Value & val = root["test"]["test"];
-	val = Yaml::Object();
-	val["test"]
-
-	//val["cool"] = Yaml::Object();
-
-	//std::cout << b.Get() << std::endl;
-	
-		*/
-	
+	std::cin.get();
 	return 0;
 }

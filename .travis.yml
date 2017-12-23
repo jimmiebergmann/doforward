@@ -18,8 +18,7 @@ install:
 script:
   - mkdir build
   - cd build
-  - ls ..
-  - cmake .. 
+  - cmake ..
   - make
   - cd ..
   - ./bin/server_tests

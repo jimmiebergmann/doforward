@@ -38,7 +38,8 @@ YAML documentation: http://www.yaml.org/spec/current.html#id2502325
 #include <sstream>
 #include <fstream>
 #include <memory>
-#include <exception>
+#include <Exception.hpp>
+
 
 namespace dof
 {
@@ -59,7 +60,7 @@ namespace dof
 		class Sequence;
 		class Mapping;
 
-		class ParsingError : public std::exception
+		class ParsingError : public Exception
 		{
 
 		public:
@@ -68,7 +69,7 @@ namespace dof
 
 		};
 
-		class InternalError : public std::exception
+		class InternalError : public Exception
 		{
 
 		public:
@@ -89,7 +90,7 @@ namespace dof
 		{
 
 		public:
-			
+		
 			friend class Reader;
 			friend class Scalar;
 			friend class Sequence;
@@ -144,11 +145,8 @@ namespace dof
 			Node & operator = (const Node & node);
 			Node & operator = (const Scalar & scalar);
 			Node & operator = (const Mapping & mapping);
-
-
 			Node & operator [](const int index);
 			Node & operator [](const std::string & key);
-			
 
 		private:
 
@@ -287,7 +285,7 @@ namespace dof
 
 			void ReadFromFile(const std::string & filename, Node & root);
 
-			void ReadFromString(const std::string & string, Node & root);
+			void ReadFromMemory(const std::string & string, Node & root);
 
 			void ReadFromMemory(const char * data, const int dataSize, Node & root);
 
@@ -326,40 +324,35 @@ namespace dof
 			/**
 			* @breif Get key map of current line.
 			*
+			* @param valueStart[out] Start position of key value.
+			*
 			* @throw ParsingError
 			*
 			* @return String of keyword.
 			*
 			*/
-			std::string FindKeyword(size_t & keyEnd);
-
-			/**
-			* @breif Find character not inside quotion marks.
-			*
-			* @throw ParsingError
-			*
-			* @return Position of character in current line.
-			*
-			*/
-			size_t FindNotInQuote(char find);
+			std::string FindKeyword(size_t & valueStart);
 
 			/**
 			* @breif Read next line in stream.
 			*
+			* @param line[out]		Next line returned, cleaned from initial spaces.
+			* @param offset[out]	Line data offset.
+			*
 			* @throw ParsingError if reading from stream fails.
 			*
-			* @return true if successful, false if end of stream.
+			* @return true if successful, false if end of stream(no line data).
 			*
 			*/
-			bool Reader::ReadNextLine(std::string & line, size_t & start);
+			bool Reader::ReadNextLine(std::string & line, size_t & offset);
 
 			struct ReaderData
 			{
 				ReaderData(std::stringstream & stream);
 
 				std::stringstream & Stream;
-				size_t Start;
-				size_t Offset;
+				size_t StartOffset;
+				size_t CurrentOffset;
 				std::string Line;
 				
 			};
@@ -399,12 +392,12 @@ namespace dof
 		*	Exception implementations.
 		*/
 		ParsingError::ParsingError(const std::string & message) :
-			std::exception(message.c_str())
+			Exception(Exception::Yaml, message)
 		{
 		}
 
 		InternalError::InternalError(const std::string & message) :
-			std::exception(message.c_str())
+			Exception(Exception::Yaml, message)
 		{
 		}
 
@@ -475,7 +468,8 @@ namespace dof
 		{
 			if (m_pDataItem == nullptr || m_Type != ScalarType)
 			{
-				return static_cast<T>(0);
+				T tempValue = T();
+				return tempValue;
 			}
 
 			Scalar * pScalar = static_cast<Scalar *>(m_pDataItem);
@@ -526,7 +520,7 @@ namespace dof
 		{
 			return *this = std::to_string(number);
 		}
-			
+
 		Node & Node::operator = (const double number)
 		{
 			return *this = std::to_string(number);
@@ -708,9 +702,15 @@ namespace dof
 			ss >> value;
 			if (ss.fail())
 			{
-				return static_cast<T>(0);
+				value = T();
 			}
 			return value;
+		}
+
+		template<>
+		std::string Scalar::Value() const
+		{
+			return m_Value;
 		}
 		
 		void Scalar::Clear()
@@ -730,7 +730,7 @@ namespace dof
 				throw InternalError("Node is nullptr, passed to scalar constructor.");
 			}
 		}
-		
+
 
 		/**
 		*	Sequence implementation.
@@ -875,7 +875,7 @@ namespace dof
 			ReadFromMemory(data.get(), fileSize, root);
 		}
 
-		void Reader::ReadFromString(const std::string & string, Node & root)
+		void Reader::ReadFromMemory(const std::string & string, Node & root)
 		{
 			ReadFromMemory(string.c_str(), string.size(), root);
 		}
@@ -914,22 +914,22 @@ namespace dof
 			root.Clear();
 
 			std::string & line = m_pData->Line;
-			size_t & start = m_pData->Start;
+			size_t & startOffset = m_pData->StartOffset;
 
 			// Get first line, ignore document start: "---".
-			if (ReadNextLine(line, start) == false)
+			if (ReadNextLine(line, startOffset) == false)
 			{
 				return;
 			}
 			if (line.size() >= 3 && line.substr(0, 3) == "---")
 			{
-				if (ReadNextLine(line, start) == false)
+				if (ReadNextLine(line, startOffset) == false)
 				{
 					return;
 				}
 			}
 
-			m_pData->Offset = start;
+			m_pData->CurrentOffset = startOffset;
 
 			// Sequence.
 			if (line[0] == '-')
@@ -956,26 +956,42 @@ namespace dof
 		bool Reader::ParseMapping(Node & node)
 		{
 			// Find keyword
-			size_t keyEnd = 0;
+			size_t valueStart = 0;
 			std::string key = "";
 			size_t offset = 0;
 			std::string value = "";
 			
 			while (1)
 			{
-				key = FindKeyword(keyEnd);
-
-				value = m_pData->Line.substr(keyEnd);
-				size_t valueStart = value.find_first_not_of(' ');
+				key = FindKeyword(valueStart);
 
 				// Mapping or sequence value of current mapping.
 				if (valueStart == std::string::npos)
 				{
-					throw InternalError("Sequence/Mapping of map not yet implemented.");
+					// Get next line.
+					if (ReadNextLine(m_pData->Line, offset) == false)
+					{
+						throw InternalError("Excepting Sequence/Mapping of next line.");
+					}
+
+					// Sequence.
+					if (m_pData->Line[0] == '-')
+					{
+						throw InternalError("Sequence of map not yet implemented.");
+						/// return ParseSequence(new Sequence());
+					}
+
+					// Mapping.
+					if (isalnum(m_pData->Line[0]))
+					{
+						Mapping * pMapping = new Mapping();
+						node[key] = pMapping;
+						return ParseMapping(pMapping->GetNode());
+					}
 				}
 
 				// Scalar
-				node[key] = value.substr(valueStart);
+				node[key] = m_pData->Line.substr(valueStart);
 
 				// Get next line.
 				if (ReadNextLine(m_pData->Line, offset) == false)
@@ -984,7 +1000,7 @@ namespace dof
 				}
 
 				// Current mapping is done.
-				if (offset < m_pData->Offset)
+				if (offset < m_pData->CurrentOffset)
 				{
 					return true;
 				}
@@ -993,66 +1009,29 @@ namespace dof
 			return true;
 		}
 
-		std::string Reader::FindKeyword(size_t & keyEnd)
+		std::string Reader::FindKeyword(size_t & valueStart)
 		{
-			size_t end = FindNotInQuote(':');
+			size_t end = m_pData->Line.find_first_of(':');
 			if (end == std::string::npos)
 			{
 				throw ParsingError("Failed to find keyword.");
 			}
-
 			std::string key = m_pData->Line.substr(0, end);
-			keyEnd = key.find_last_not_of(' ');
-			if (keyEnd != std::string::npos)
+
+			// No value of key.
+			valueStart = key.size() + 1;
+			if (valueStart >= m_pData->Line.size())
 			{
-				key = key.substr(0, keyEnd);
-			}
-			else
-			{
-				keyEnd = end;
+				valueStart = std::string::npos;
+				return key;
 			}
 
-
-
+			valueStart = m_pData->Line.find_first_not_of(' ', valueStart);
 			return key;
 		}
 
-		size_t Reader::FindNotInQuote(char find)
-		{
-			bool inQuote = false;
 
-			for (size_t i = 0; i <  m_pData->Line.size(); i++)
-			{
-				char cur = m_pData->Line[i];
-				char last = 0;
-				if (i > 0)
-				{
-					last = m_pData->Line[i - 1];
-				}
-
-				if (cur == '"')
-				{
-					if (last != '\\')
-					{
-						inQuote = !inQuote;
-					}
-
-					continue;
-				}
-
-				if (cur == find)
-				{
-					if (inQuote == false)
-					{
-						return i;
-					}
-				}
-			}
-
-			return std::string::npos;
-		}
-
-		bool Reader::ReadNextLine(std::string & line, size_t & start)
+		bool Reader::ReadNextLine(std::string & line, size_t & offset)
 		{
 			while(1)
 			{
@@ -1082,10 +1061,10 @@ namespace dof
 				{
 					continue;
 				}
-				start = startPos;
+				offset = startPos;
 
 				auto endPos = line.find_last_not_of(' ');
-				line = line.substr(startPos, endPos - startPos);
+				line = line.substr(startPos, endPos - startPos + 1);
 
 				if (line[0] == '#')
 				{
@@ -1104,8 +1083,8 @@ namespace dof
 
 		Reader::ReaderData::ReaderData(std::stringstream & stream) :
 			Stream(stream),
-			Start(0),
-			Offset(0),
+			StartOffset(0),
+			CurrentOffset(0),
 			Line("")
 		{
 
