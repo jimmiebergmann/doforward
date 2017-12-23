@@ -28,14 +28,14 @@
 #include <iostream>
 #include <iostream>
 
-using namespace dof;
+using namespace dof::Yaml;
 
 int main()
 {
 	std::string file =
 		"    \n"
 		"\n"
-		"# test!    \n"
+		" # test!    \n"
 		"  #test  \n"
 		"   \n"
 		"test_1: 123\n"
@@ -47,16 +47,18 @@ int main()
 		"test_5: 'Hello\\'world'\n";
 
 
-	Yaml::Scalar scalar;
+	Node root;
+	Reader reader;
+	reader.ReadFromString(file, root);
+	/*root["foo"] = "bar";
+	root["hello"] = Scalar("world");
+	
 
-	scalar.GetNode() = "test";
+	Scalar & a = root["foo"].AsScalar();
+	Scalar & b = root["hello"].AsScalar();
 
 
-	scalar.GetNode() = 123;
-
-	auto val = scalar.Value<std::string>();
-
-	int b = 5;
+	int c = 5;*/
 
 
 	/*Yaml::Value root;
