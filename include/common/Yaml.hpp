@@ -479,6 +479,12 @@ namespace dof
 
 		void Node::Clear()
 		{
+			this->m_Type = NullType;
+			this->m_pParent = nullptr;
+			//this->m_pChild = nullptr;
+			
+			//this->m_pDataItem = nullptr;
+
 			/// NEED IMPLEMENTATION OF CLEANING.
 		}
 
@@ -959,7 +965,6 @@ namespace dof
 			size_t valueStart = 0;
 			std::string key = "";
 			size_t offset = 0;
-			std::string value = "";
 			
 			while (1)
 			{
@@ -974,6 +979,13 @@ namespace dof
 						throw InternalError("Excepting Sequence/Mapping of next line.");
 					}
 
+					// Invalid if offset is higher than current.
+					if (offset <= m_pData->CurrentOffset)
+					{
+						throw InternalError("Offset of next line is incorrect.");
+					}
+					m_pData->CurrentOffset = offset;
+
 					// Sequence.
 					if (m_pData->Line[0] == '-')
 					{
@@ -986,6 +998,7 @@ namespace dof
 					{
 						Mapping * pMapping = new Mapping();
 						node[key] = pMapping;
+
 						return ParseMapping(pMapping->GetNode());
 					}
 				}
@@ -1004,6 +1017,14 @@ namespace dof
 				{
 					return true;
 				}
+
+				// Invalid if offset is higher than current.
+				if (offset > m_pData->CurrentOffset)
+				{
+					throw InternalError("Offset of next line is incorrect.");
+				}
+
+				m_pData->CurrentOffset = offset;
 			}
 
 			return true;
