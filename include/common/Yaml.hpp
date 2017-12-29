@@ -148,7 +148,8 @@ namespace dof
 			template<class T>
 			T Value() const;
 
-			
+			size_t Size() const;
+
 
 			Node & operator = (const std::string & string);
 			Node & operator = (const int number);
@@ -240,6 +241,8 @@ namespace dof
 
 			Node & operator [](const int index);
 
+			size_t Size() const;
+
 			void Clear();
 
 		private:
@@ -270,6 +273,8 @@ namespace dof
 			Node & AsNode() const;
 
 			Node & operator [](const std::string & key);
+
+			size_t Size() const;
 
 			void Clear();
 
@@ -550,6 +555,25 @@ namespace dof
 			Scalar * pScalar = static_cast<Scalar *>(m_pDataItem);
 
 			return pScalar->Value<T>();
+		}
+
+		size_t Node::Size() const
+		{
+			if (m_pDataItem == nullptr)
+			{
+				return 0;
+			}
+
+			if (m_Type == SequenceType)
+			{
+				return static_cast<Sequence *>(m_pDataItem)->Size();
+			}
+			else if (m_Type == MappingType)
+			{
+				return static_cast<Mapping *>(m_pDataItem)->Size();
+			}
+
+			return 0;
 		}
 
 		Node & Node::operator = (const std::string & string)
@@ -864,6 +888,11 @@ namespace dof
 			return *pNode;
 		}
 
+		size_t Sequence::Size() const
+		{
+			return m_Childs.size();
+		}
+
 		void Sequence::Clear()
 		{
 			/// NEED FIX.
@@ -915,6 +944,11 @@ namespace dof
 			Node * pNode = new Node();
 			m_Childs.insert({key, pNode});
 			return *pNode;
+		}
+
+		size_t Mapping::Size() const
+		{
+			return m_Childs.size();
 		}
 
 		void Mapping::Clear()
@@ -1026,27 +1060,32 @@ namespace dof
 			m_pData->CurrentOffset = startOffset;
 
 
-			bool sequence = true;
+			Node::eType rootType = Node::NullType;
 
 			// Sequence.
 			if (line[0] == '-')
 			{
-				sequence = true;
+				rootType = Node::SequenceType;
 				root.ClearAsSequence();
 			}
 			// Mapping.
 			else if (isalnum(line[0]))
 			{
-				sequence = false;
+				rootType = Node::MappingType;
 				root.ClearAsMapping();
 			}
+			else
+			{
+				throw ParsingError("Root not of type sequence of mapping.");
+			}
 
+			// Keep on reading data until root is clear.
 			while (1)
 			{
 				bool ret = false;
 
 				// Sequence
-				if (sequence == true)
+				if (rootType == Node::SequenceType)
 				{
 					if(ParseSequence(root) == false)
 					{
@@ -1062,25 +1101,54 @@ namespace dof
 					}
 				}
 			}
-
-			throw ParsingError("Root not of type sequence of mapping.");
 		}
 
 		bool Reader::ParseSequence(Node & node)
 		{
+			const size_t seqLevel = m_pData->CurrentOffset;
+			size_t offset = 0;
+
+			while (1)
+			{
+				// Make sure that this is a sequence
+				if (m_pData->Line[0] != '-')
+				{
+					throw InternalError("Trying to parse non sequence as sequence.");
+				}
+
+				// Sequence of sequence?
+				if (m_pData->Line.size() == 1)
+				{
+					if (ReadNextLine(m_pData->Line, offset) == false)
+					{
+						throw ParsingError("Excepting Sequence/Mapping of next line.");
+					}
+
+					Node & newNode = node[node.Size()].ClearAsSequence().AsNode();
+					newNode.m_pParent = &node;
+					node.m_pChild = &newNode;
+
+					if (ParseSequence(newNode) == true)
+					{
+						continue;
+					}
+					return false;
+				}
+			}
+
+
+			//throw InternalError("Sequence parsing is not yet implemented.");
 			return false;
 		}
 
 		bool Reader::ParseMapping(Node & node)
 		{
-			// Find keyword
+			const size_t mapLevel = m_pData->CurrentOffset;
 			size_t valueStart = 0;
 			std::string key = "";
 			size_t offset = 0;
 			std::string value = "";
 
-			const size_t mapLevel = m_pData->CurrentOffset;
-			
 			while (1)
 			{
 				key = FindKeyword(valueStart);
@@ -1102,8 +1170,15 @@ namespace dof
 					// Sequence.
 					if (m_pData->Line[0] == '-')
 					{
-						throw InternalError("Sequence of map not yet implemented.");
-						/// return ParseSequence(new Sequence());
+						Node & newNode = node[key].ClearAsSequence().AsNode();
+						newNode.m_pParent = &node;
+						node.m_pChild = &newNode;
+
+						if (ParseSequence(newNode) == true)
+						{
+							continue;
+						}
+						return false;
 					}
 
 					// Mapping.
@@ -1113,18 +1188,11 @@ namespace dof
 						newNode.m_pParent = &node;
 						node.m_pChild = &newNode;
 
-						const bool ret = ParseMapping(newNode);
-						if (ret == true)
+						if (ParseMapping(newNode) == true)
 						{
 							continue;
 						}
 						return false;
-						/*const bool ret = ParseMapping(newNode);
-						if (m_pData->CurrentOffset > mapLevel)
-						{
-							throw ParsingError("Incorrect offset of next line.");
-						}
-						return ret;*/
 					}
 
 					throw ParsingError("Excepting Sequence/Mapping of next line.");
