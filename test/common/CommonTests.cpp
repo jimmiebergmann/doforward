@@ -32,8 +32,11 @@ using namespace dof::Yaml;
 int main()
 {
 	std::string file =
-		"root1: 102 1\n"
-		"root2: 543 2\n";
+		"root1: \n"
+		"   root2: cool\n"
+		"  root3: 543 2\n"
+		"root4: \n"
+		"  root5: 123\n";
 
 
 
@@ -41,8 +44,19 @@ int main()
 	Reader reader;
 	reader.ReadFromMemory(file, root);
 
-	std::cout << root["root1"].Value<std::string>() << std::endl;
-	std::cout << root["root2"].Value<int>() << std::endl;
+	Node & root1 = root["root1"];
+	Node & root2 = root1["root2"];
+
+	Node & root3 = root["root3"];
+
+	Node & root4 = root["root4"];
+	Node & root5 = root4["root5"];
+
+
+
+	std::cout << root["root1"]["root2"].Value<std::string>() << std::endl;
+	std::cout << root["root3"].Value<std::string>() << std::endl;
+	std::cout << root["root4"]["root5"].Value<std::string>() << std::endl;
 
 	/*root["foo"] = "bar";
 	root["hello"] = Scalar("world");

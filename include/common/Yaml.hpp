@@ -120,6 +120,7 @@ namespace dof
 			*/
 			~Node();
 
+
 			bool IsNull() const;
 
 			bool IsScalar() const;
@@ -128,14 +129,26 @@ namespace dof
 
 			bool IsMapping() const;
 
+
 			Scalar & AsScalar() const;
 
+			Sequence & AsSequence() const;
+
 			Mapping & AsMapping() const;
+
+			Node & Clear();
+
+			Scalar & ClearAsScalar();
+
+			Sequence & ClearAsSequence();
+
+			Mapping & ClearAsMapping();
+
 
 			template<class T>
 			T Value() const;
 
-			void Clear();
+			
 
 			Node & operator = (const std::string & string);
 			Node & operator = (const int number);
@@ -144,6 +157,7 @@ namespace dof
 			Node & operator = (const double number);
 			Node & operator = (const Node & node);
 			Node & operator = (const Scalar & scalar);
+			Node & operator = (const Sequence & sequence);
 			Node & operator = (const Mapping & mapping);
 			Node & operator [](const int index);
 			Node & operator [](const std::string & key);
@@ -190,7 +204,7 @@ namespace dof
 
 			~Scalar();
 
-			Node & GetNode() const;
+			Node & AsNode() const;
 
 			template<class T>
 			T Value() const;
@@ -222,7 +236,7 @@ namespace dof
 
 			~Sequence();
 
-			Node & GetNode() const;
+			Node & AsNode() const;
 
 			Node & operator [](const int index);
 
@@ -253,7 +267,7 @@ namespace dof
 
 			~Mapping();
 
-			Node & GetNode() const;
+			Node & AsNode() const;
 
 			Node & operator [](const std::string & key);
 
@@ -286,7 +300,6 @@ namespace dof
 			void ReadFromFile(const std::string & filename, Node & root);
 
 			void ReadFromMemory(const std::string & string, Node & root);
-
 			void ReadFromMemory(const char * data, const int dataSize, Node & root);
 
 			void ReadFromStream(std::stringstream & stream, Node & root);
@@ -324,7 +337,7 @@ namespace dof
 			/**
 			* @breif Get key map of current line.
 			*
-			* @param valueStart[out] Start position of key value.
+			* @param valueStart[out] Start position of value.
 			*
 			* @throw ParsingError
 			*
@@ -344,8 +357,12 @@ namespace dof
 			* @return true if successful, false if end of stream(no line data).
 			*
 			*/
-			bool Reader::ReadNextLine(std::string & line, size_t & offset);
+			bool ReadNextLine(std::string & line, size_t & offset);
 
+			/**
+			* @breif Temporary data for parsing.
+			*
+			*/
 			struct ReaderData
 			{
 				ReaderData(std::stringstream & stream);
@@ -357,24 +374,7 @@ namespace dof
 				
 			};
 
-
-			ReaderData * m_pData;
-
-			/*bool FindStart();
-
-			void ParseLine(const std::string & line);
-
-			void ParseList(const std::string & line);
-
-			void ParseObject(const std::string & line);
-
-			std::string TrimSpaces(const std::string & text);*/
-
-			/*std::stack<std::pair<int, Value *>> m_ValueStack;
-			std::stringstream *					m_pStream;
-			Value *								m_pCurrentValue;
-			int									m_CurrentLevel;
-			int									m_StartLevel;*/
+			ReaderData * m_pData; ///< Temporary data for partsing.
 
 		};
 		
@@ -385,6 +385,7 @@ namespace dof
 		*/
 		static Node		EmptyNode;
 		static Scalar	EmptyScalar;
+		static Sequence EmptySequence;
 		static Mapping	EmptyMapping;
 
 
@@ -452,6 +453,17 @@ namespace dof
 			return *static_cast<Scalar *>(m_pDataItem);
 		}
 
+		Sequence & Node::AsSequence() const
+		{
+			if (m_pDataItem == nullptr || m_Type != SequenceType)
+			{
+				EmptySequence.Clear();
+				return EmptySequence;
+			}
+
+			return *static_cast<Sequence *>(m_pDataItem);
+		}
+
 		Mapping & Node::AsMapping() const
 		{
 			if (m_pDataItem == nullptr || m_Type != MappingType)
@@ -461,6 +473,69 @@ namespace dof
 			}
 
 			return *static_cast<Mapping *>(m_pDataItem);
+		}
+
+
+		Node & Node::Clear()
+		{
+			if (m_Type == ScalarType)
+			{
+				Scalar * pScalar = static_cast<Scalar*>(m_pDataItem);
+				delete pScalar;
+			}
+			else if (m_Type == SequenceType)
+			{
+				///< REMOVE ALL CHILDS.
+
+				Sequence * pSequence = static_cast<Sequence*>(m_pDataItem);
+				delete pSequence;
+			}
+			else if (m_Type == MappingType)
+			{
+				///< REMOVE ALL CHILDS.
+
+				Mapping * pMapping = static_cast<Mapping*>(m_pDataItem);
+				delete pMapping;
+			}
+			else
+			{
+				if (m_pDataItem != nullptr)
+				{
+					throw InternalError("Cannot clear NullType Node.");
+				}
+				return *this;
+			}
+
+			m_pDataItem = nullptr;
+			m_Type = NullType;
+			return *this;
+		}
+
+		Scalar & Node::ClearAsScalar()
+		{
+			Clear();
+			m_Type = ScalarType;
+			Scalar * pScalar = new Scalar(this);
+			m_pDataItem = static_cast<void*>(pScalar);
+			return *pScalar;
+		}
+
+		Sequence & Node::ClearAsSequence()
+		{
+			Clear();
+			m_Type = SequenceType;
+			Sequence * pSequence = new Sequence(this);
+			m_pDataItem = static_cast<void*>(pSequence);
+			return *pSequence;
+		}
+
+		Mapping & Node::ClearAsMapping()
+		{
+			Clear();
+			m_Type = MappingType;
+			Mapping * pMapping = new Mapping(this);
+			m_pDataItem = static_cast<void*>(pMapping);
+			return *pMapping;
 		}
 
 		template<class T>
@@ -475,11 +550,6 @@ namespace dof
 			Scalar * pScalar = static_cast<Scalar *>(m_pDataItem);
 
 			return pScalar->Value<T>();
-		}
-
-		void Node::Clear()
-		{
-			/// NEED IMPLEMENTATION OF CLEANING.
 		}
 
 		Node & Node::operator = (const std::string & string)
@@ -530,7 +600,7 @@ namespace dof
 		{
 			if (node.m_Type == ScalarType)
 			{
-				return *this = node.AsScalar().m_Value;
+				return *this = node.AsScalar();
 			}
 
 			/// NEED MORE CODE HERE... MISSING CODE.
@@ -543,8 +613,33 @@ namespace dof
 			return *this = scalar.m_Value;
 		}
 
+		Node & Node::operator = (const Sequence & sequence)
+		{
+			throw InternalError("Not implemented yet!");
+			return *this;
+		}
+
 		Node & Node::operator = (const Mapping & mapping)
 		{
+			Mapping * pMapping = nullptr;
+
+			if (m_Type != MappingType)
+			{
+				if (m_pDataItem != nullptr)
+				{
+					delete m_pDataItem;
+				}
+
+				m_Type = MappingType;
+				pMapping = new Mapping(this);
+				m_pDataItem = pMapping;
+			}
+			else
+			{
+				m_pDataItem = static_cast<Mapping *>(m_pDataItem);
+			}
+
+			///< SHOULD NOT RUN CORRECTYL. 
 			return *this;
 		}
 
@@ -684,7 +779,7 @@ namespace dof
 
 		}
 
-		Node & Scalar::GetNode() const
+		Node & Scalar::AsNode() const
 		{
 			if (m_pNode == nullptr)
 			{
@@ -746,7 +841,7 @@ namespace dof
 
 		}
 
-		Node & Sequence::GetNode() const
+		Node & Sequence::AsNode() const
 		{
 			if (m_pNode == nullptr)
 			{
@@ -799,7 +894,7 @@ namespace dof
 		{
 		}
 
-		Node & Mapping::GetNode() const
+		Node & Mapping::AsNode() const
 		{
 			if (m_pNode == nullptr)
 			{
@@ -928,21 +1023,44 @@ namespace dof
 					return;
 				}
 			}
-
 			m_pData->CurrentOffset = startOffset;
+
+
+			bool sequence = true;
 
 			// Sequence.
 			if (line[0] == '-')
 			{
-				ParseSequence(root = new Sequence());
-				return;
+				sequence = true;
+				root.ClearAsSequence();
+			}
+			// Mapping.
+			else if (isalnum(line[0]))
+			{
+				sequence = false;
+				root.ClearAsMapping();
 			}
 
-			// Mapping.
-			if (isalnum(line[0]))
+			while (1)
 			{
-				ParseMapping(root = new Mapping());
-				return;
+				bool ret = false;
+
+				// Sequence
+				if (sequence == true)
+				{
+					if(ParseSequence(root) == false)
+					{
+						return;
+					}
+				}
+				// Mapping.
+				else
+				{
+					if (ParseMapping(root) == false)
+					{
+						return;
+					}
+				}
 			}
 
 			throw ParsingError("Root not of type sequence of mapping.");
@@ -960,6 +1078,8 @@ namespace dof
 			std::string key = "";
 			size_t offset = 0;
 			std::string value = "";
+
+			const size_t mapLevel = m_pData->CurrentOffset;
 			
 			while (1)
 			{
@@ -971,8 +1091,13 @@ namespace dof
 					// Get next line.
 					if (ReadNextLine(m_pData->Line, offset) == false)
 					{
-						throw InternalError("Excepting Sequence/Mapping of next line.");
+						throw ParsingError("Excepting Sequence/Mapping of next line.");
 					}
+					if (offset <= m_pData->CurrentOffset)
+					{
+						throw ParsingError("Incorrect offset of next line.");
+					}
+					m_pData->CurrentOffset = offset;
 
 					// Sequence.
 					if (m_pData->Line[0] == '-')
@@ -984,14 +1109,30 @@ namespace dof
 					// Mapping.
 					if (isalnum(m_pData->Line[0]))
 					{
-						Mapping * pMapping = new Mapping();
-						node[key] = pMapping;
-						return ParseMapping(pMapping->GetNode());
+						Node & newNode = node[key].ClearAsMapping().AsNode();
+						newNode.m_pParent = &node;
+						node.m_pChild = &newNode;
+
+						const bool ret = ParseMapping(newNode);
+						if (ret == true)
+						{
+							continue;
+						}
+						return false;
+						/*const bool ret = ParseMapping(newNode);
+						if (m_pData->CurrentOffset > mapLevel)
+						{
+							throw ParsingError("Incorrect offset of next line.");
+						}
+						return ret;*/
 					}
+
+					throw ParsingError("Excepting Sequence/Mapping of next line.");
 				}
 
 				// Scalar
 				node[key] = m_pData->Line.substr(valueStart);
+				node[key].m_pParent = &node;
 
 				// Get next line.
 				if (ReadNextLine(m_pData->Line, offset) == false)
@@ -999,11 +1140,21 @@ namespace dof
 					return false;
 				}
 
+				if (offset > m_pData->CurrentOffset)
+				{
+					throw InternalError("Incorrect offset of next line.");
+				}
+
 				// Current mapping is done.
 				if (offset < m_pData->CurrentOffset)
 				{
+					m_pData->CurrentOffset = offset;
 					return true;
 				}
+
+				m_pData->CurrentOffset = offset;
+
+				// Continue...
 			}
 
 			return true;
