@@ -25,7 +25,9 @@
 
 #pragma once
 
+#include <Service.hpp>
 #include <Node.hpp>
+#include <Safe.hpp>
 #include <Yaml.hpp>
 #include <string>
 #include <map>
@@ -63,12 +65,13 @@ namespace dof
 		*				- max_connections: *1024*
 		*
 		*			/services/:
-		*				- name:				service1
-		*				  protocol:			tcp (tcp/udp/http/https)
-		*				  peer_port:		12345
-		*				  node_port:		54321
-		*				  max_connections:	*256*
-		*				  /session/:		*30s*	(enabled = 30s/disabled = 0s/..s/..m/..h/..d) Ignored for http(s) protocol.
+		*				- name:				  service1
+		*				  protocol:			  tcp (tcp/udp/http/https)
+		*				  peer_port:		  12345
+		*				  /monitor/:          enabled
+		*				  /monitor_port/:     100
+	    *				  /max_connections/:  *256*
+		*				  /session/:		  *30s*	(enabled = 30s/disabled = 0s/..s/..m/..h/..d) Ignored for http(s) protocol.
 		*				  /groups/:
 		*						- Name refering to node_groups::group::name
 		*						- ...
@@ -143,6 +146,12 @@ namespace dof
 		Balancer();
 
 		/**
+		* @breif Destructor.
+		*
+		*/
+		~Balancer();
+
+		/**
 		* @breif Get inter-process communication port.
 		*
 		*/
@@ -184,6 +193,80 @@ namespace dof
 		*/
 		void Finish();
 
+		/**
+		* @breif Add new service to balancer.
+		*		 The balancer takes full responsibility over the service.
+		*
+		* @return True if added, false if already added.
+		*
+		*/
+		bool AddService(Service & service);
+
+		/**
+		* @breif Remove service from balancer.
+		*		 The service will be destroyed and deallocated.
+		*
+		* @return True if removed, false if service is not found.
+		*
+		*/
+		bool RemoveService(Service & service);
+
+		/**
+		* @breif Get service.
+		*
+		* @param name		Name of service.
+		* @param port		Port of service.
+		* @param protocol	Protocol of serivce.
+		*
+		* @return Refernce to found service. If not found, InvalidService is returned.
+		*
+		*/
+		Service & GetService(const std::string & name);
+		Service & GetService(const unsigned short port, const Network::Protocol::eType protocol);
+
+
+		/**
+		* @breif Add new node to balancer and associate with service.
+		*		 The balancer takes full responsibility over the node.
+		*
+		* @param node Reference to node to add.
+		* @param service Reference to service to associate node with.
+		*
+		* @return True if added, false if already added.
+		*
+		*/
+		bool AddNode(Node & node, Service & service);
+
+		/**
+		* @breif Remove node from balancer and detatch from service.
+		*		 The service will be destroyed and deallocated.
+		*
+		* @return True if removed, false if service is not found.
+		*
+		*/
+		bool RemoveNode(Node & node);
+
+		/**
+		* @breif Get node.
+		*
+		* @param name		Name of node.
+		* @param address	Ip address of node.
+		* @param port		Port of node.
+		* @param protocol	Protocol of node.
+		*
+		* @return Refernce to found node. If not found, InvalidNode is returned.
+		*
+		*/
+		Node & GetNode(const std::string & name);
+		Node & GetNode(const std::string & address, const unsigned short port, const Network::Protocol::eType protocol);
+
+		/**
+		* @breif Invlaid types to compare return results with.
+		*
+		*/
+		static const Service	InvalidService;
+		static const Node		InvalidNode;
+
 	private:
 
 		/**
@@ -192,10 +275,51 @@ namespace dof
 		*/
 		Balancer(const Balancer & balancer);
 
-		unsigned short					m_InterprocessPort; ///< Port for inter-process communication with Doforward server.
-		unsigned int					m_MaxConnections;	///< Max concurrent connections.
-		std::map<std::string, Node *>	m_Nodes;			///< Map of nodes.
+		/**
+		* @breif Load configurations.
+		*
+		*/
+		void LoadConfig(Config & config);
 
+		/**
+		* @breif Helper function of LoadConfig, loads one service from yaml config.
+		*
+		*/
+		void LoadConfigService(Yaml::Node & service, const unsigned int index);
+
+		/**
+		* @breif Helper function of LoadConfigService, loads one node from yaml config.
+		*
+		*/
+		void LoadConfigNode(Yaml::Node & node, Service & service, const unsigned int index, const unsigned int service_index);
+
+		/**
+		* @breif Get the next service name available.
+		*
+		*/
+		std::string GetNextServiceName();
+
+		/**
+		* @breif Get the next node name available.
+		*
+		*/
+		std::string GetNextNodeName();
+
+		typedef std::pair<unsigned short, Network::Protocol::eType>					PortProtocolPair;
+		typedef std::tuple<std::string, unsigned short, Network::Protocol::eType>	AddressPortProtocolPair;
+
+		unsigned short									m_InterprocessPort;			///< Port for inter-process communication with Doforward server.
+		unsigned int									m_MaxConnections;			///< Max concurrent connections.
+		
+		Safe<std::set<Service *>>						m_Services;					///< Set of services
+		Safe<std::map<std::string, Service *>>			m_ServicesName;				///< Map of services. Name as key.
+		Safe<std::map<PortProtocolPair, Service *>>		m_ServicesPortProto;		///< Map of services. Port and protocol as key.
+			
+		Safe<std::set<Node *>>							m_Nodes;					///< Set of nodes.
+		Safe<std::map<std::string, Node *>>				m_NodesName;				///< Map of nodes. Name as key.
+		Safe<std::map<AddressPortProtocolPair, Node *>>	m_NodesAddressPortProto;	///< Map of nodes. Address, Port and protocol as key.
+
+		
 	};
 
 }

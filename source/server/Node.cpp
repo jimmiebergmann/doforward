@@ -24,20 +24,92 @@
 */
 
 #include <Node.hpp>
+#include <Balancer.hpp>
 #include <Exception.hpp>
 
 namespace dof
 {
 
 	// Node class
-	Node::Node()
+	Node::Node(	Balancer & balancer,
+				const std::string & name,
+				const Network::Protocol::eType protocol,
+				const std::string & address,
+				unsigned short port) :
+		m_Balancer(balancer),
+		m_pService(nullptr),
+		m_Name(name),
+		m_Protocol(protocol),
+		m_Address(address),
+		m_Port(port)
 	{
-
 	}
 
-	Node::Node(const Node & node)
+	/**
+	* @breif Destructor.
+	*
+	*/
+	Node::~Node()
 	{
+	}
 
+	/**
+	* @breif Get reference to balancer.
+	*
+	*/
+	Balancer & Node::GetBalancer() const
+	{
+		return m_Balancer;
+	}
+
+	Service & Node::GetService() const
+	{
+		if (m_pService == nullptr)
+		{
+			return const_cast<Service&>(Balancer::InvalidService);
+		}
+
+		return *m_pService;
+	}
+
+	const std::string & Node::GetName() const
+	{
+		return m_Name;
+	}
+
+	Network::Protocol::eType Node::GetProtocol() const
+	{
+		return m_Protocol;
+	}
+
+	const std::string & Node::GetAddress() const
+	{
+		return m_Address;
+	}
+
+	unsigned short Node::GetPort() const
+	{
+		return m_Port;
+	}
+
+	bool Node::operator == (const Node & node)
+	{
+		if (this == &node)
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	bool Node::operator != (const Node & node)
+	{
+		if (this != &node)
+		{
+			return true;
+		}
+
+		return false;
 	}
 
 }

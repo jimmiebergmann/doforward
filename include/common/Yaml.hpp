@@ -157,6 +157,17 @@ namespace dof
 				return pScalar->Value<T>();
 			}
 
+			template<class T>
+			T Value(const T & defaultValue) const
+			{
+				if (m_pDataItem == nullptr || m_Type != ScalarType)
+				{
+					return defaultValue;
+				}
+				Scalar * pScalar = static_cast<Scalar *>(m_pDataItem);
+				return pScalar->Value<T>();
+			}
+
 			size_t Size() const;
 
 

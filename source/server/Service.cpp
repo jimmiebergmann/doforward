@@ -25,7 +25,6 @@
 
 #include <Service.hpp>
 #include <Balancer.hpp>
-#include <Group.hpp>
 #include <Node.hpp>
 #include <Exception.hpp>
 
@@ -34,19 +33,20 @@ namespace dof
 
 	// Service class
 	Service::Service(	Balancer & balancer,
-						const eProtocol protocol,
+						const std::string & name,
+						const Network::Protocol::eType protocol,
 						const unsigned short peerPort,
-						const unsigned short nodePort,
-						const unsigned int maxConnections,
+						const unsigned short monitorPort,
 						const unsigned int sessionTimeout,
-						const std::set<Node*> & nodes,
-						const std::set<Group*> & groups) :
+						const unsigned int maxConnections,
+						const std::set<Node*> & nodes) :
 		m_Balancer(balancer),
+		m_Name(name),
 		m_Protocol(protocol),
 		m_PeerPort(peerPort),
-		m_NodePort(nodePort),
-		m_MaxConnections(maxConnections),
-		m_SessionTimeout(sessionTimeout)
+		m_MonitorPort(monitorPort),
+		m_SessionTimeout(sessionTimeout),
+		m_MaxConnections(maxConnections)
 	{
 		Node * pNode = nullptr;
 		for (auto it = nodes.begin(); it != nodes.end(); it++)
@@ -57,26 +57,18 @@ namespace dof
 				throw Exception(Exception::InvalidPointer, "Invalid node pointer.");
 			}
 
-			m_Nodes.Value.insert(*it);
+			Associate(*pNode);
 		}
-
-		Group * pGroup = nullptr;
-		for (auto it = groups.begin(); it != groups.end(); it++)
-		{
-			pGroup = *it;
-			if (pGroup == nullptr)
-			{
-				throw Exception(Exception::InvalidPointer, "Invalid group pointer.");
-			}
-
-			pGroup->GetNodes(m_Nodes.Value);
-		}
-
 	};
 
 	Service::~Service()
 	{
-
+		SafeGuard sf(m_Nodes);
+		for (auto it = m_Nodes.Value.begin(); it != m_Nodes.Value.end(); it++)
+		{
+			Node * pNode = *it;
+			delete pNode;
+		}
 	}
 
 	Balancer & Service::GetBalancer() const
@@ -84,7 +76,12 @@ namespace dof
 		return m_Balancer;
 	}
 
-	Service::eProtocol Service::GetProtocol() const
+	const std::string & Service::GetName() const
+	{
+		return m_Name;
+	}
+
+	Network::Protocol::eType Service::GetProtocol() const
 	{
 		return m_Protocol;
 	}
@@ -94,9 +91,9 @@ namespace dof
 		return m_PeerPort;
 	}
 
-	unsigned short Service::GetNodePort() const
+	unsigned short Service::GetMonitorPort() const
 	{
-		return m_NodePort;
+		return m_MonitorPort;
 	}
 
 	unsigned short Service::GetMaxConnections() const
@@ -115,51 +112,49 @@ namespace dof
 		nodes.insert(m_Nodes.Value.begin(), m_Nodes.Value.end());
 	}
 
-	void Service::Associate(Node * node)
+	void Service::Associate(Node & node)
 	{
-		if (node == nullptr)
+		if (node.m_pService != nullptr)
 		{
-			throw Exception(Exception::InvalidPointer, "Invalid node pointer.");
+			return;
 		}
+		node.m_pService = this;
 
 		SafeGuard sf(m_Nodes);
-		m_Nodes.Value.insert(node);
+		m_Nodes.Value.insert(&node);
 	}
 
-	void Service::Associate(Group * group)
+	void Service::Detatch(Node & node)
 	{
-		if (group == nullptr)
+		SafeGuard sf(m_Nodes);
+		auto it = m_Nodes.Value.find(&node);
+		if (it == m_Nodes.Value.end())
 		{
-			throw Exception(Exception::InvalidPointer, "Invalid group pointer.");
+			return;
 		}
 
-		SafeGuard sf(m_Nodes);
-		group->GetNodes(m_Nodes.Value);
+		node.m_pService = nullptr;
+		m_Nodes.Value.erase(&node);
 	}
 
-	void Service::Detatch(Node * node)
+	bool Service::operator == (const Service & service)
 	{
-		if (node == nullptr)
+		if (this == &service)
 		{
-			throw Exception(Exception::InvalidPointer, "Invalid node pointer.");
+			return true;
 		}
 
-		SafeGuard sf(m_Nodes);
-		m_Nodes.Value.erase(node);
+		return false;
 	}
 
-	void Service::Detatch(Group * group)
+	bool Service::operator != (const Service & service)
 	{
-		if (group == nullptr)
+		if (this != &service)
 		{
-			throw Exception(Exception::InvalidPointer, "Invalid group pointer.");
+			return true;
 		}
 
-		std::set<Node *> eraseSet;
-		group->GetNodes(eraseSet);
-
-		SafeGuard sf(m_Nodes);
-		m_Nodes.Value.erase(eraseSet.begin(), eraseSet.end());
+		return false;
 	}
 
 }

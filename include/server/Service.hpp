@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include <Network.hpp>
 #include <string>
 #include <Safe.hpp>
 #include <set>
@@ -34,7 +35,6 @@ namespace dof
 {
 
 	class Balancer;
-	class Group;
 	class Node;
 
 	/**
@@ -52,23 +52,11 @@ namespace dof
 	public:
 
 		/**
-		* @breif Enumeration of supported communication protocols.
-		*
-		*/
-		enum eProtocol
-		{
-			Tcp,
-			/*Udp,
-			Http,
-			Https*/
-		};
-
-		/**
 		* @breif Constructor.
 		*
 		* @param balancer			Reference to balancer.
 		* @param peerPort			Peer connection port.
-		* @param nodePort			Node connection port.
+		* @param monitorPort		Monitoring port of nodes.
 		* @param sessionTimeout		Session time in seconds. 0 if sessioning is disabled.
 		* @param maxConnections		Max concurrent connections. Not used if protocol = Udp.
 		* @param nodes				Set of nodes associated with this service.
@@ -79,13 +67,13 @@ namespace dof
 		*
 		*/
 		Service(Balancer & balancer,
-				const eProtocol protocol,
-				const unsigned short peerPort,
-				const unsigned short nodePort,
-				const unsigned int sessionTimeout,
-				const unsigned int maxConnections,
-				const std::set<Node*> & nodes = {},
-				const std::set<Group*> & groups = {}
+				const std::string & name = "",
+				const Network::Protocol::eType protocol = Network::Protocol::Tcp,
+				const unsigned short peerPort = 0,
+				const unsigned short monitorPort = 0,
+				const unsigned int sessionTimeout = 0,
+				const unsigned int maxConnections = 0,
+				const std::set<Node*> & nodes = {}
 				);
 
 		/**
@@ -101,10 +89,16 @@ namespace dof
 		Balancer & GetBalancer() const;
 
 		/**
+		* @breif Get name of service.
+		*
+		*/
+		const std::string & GetName() const;
+
+		/**
 		* @breif Get communication protocol.
 		*
 		*/
-		eProtocol GetProtocol() const;
+		Network::Protocol::eType GetProtocol() const;
 
 		/**
 		* @breif Get peer connection port.
@@ -116,7 +110,7 @@ namespace dof
 		* @breif Get communication port of nodes.
 		*
 		*/
-		unsigned short GetNodePort() const;
+		unsigned short GetMonitorPort() const;
 
 		/**
 		* @breif Session timeout. 0 if sessioning is disabled.
@@ -141,27 +135,25 @@ namespace dof
 		/**
 		* @breif Associate node or group with service.
 		*
-		* @param node	Pointer of node to associate.
-		* @param group	Pointer of group to associate.
-		*
-		* @throw dof::Exception if node or group pointer is invalid.
+		* @param node Node to associate.
 		*
 		*/
-		void Associate(Node * node);
-		void Associate(Group * group);
+		void Associate(Node & node);
 
 		/**
 		* @breif Detatch node from service.
 		*
-		* @param node		Pointer of node to detatch.
-		* @param group		Pointer of group to detatch.
-		*					All group nodes are detached from service.
-		*
-		* @throw dof::Exception if node or group pointer is invalid.
+		* @param node Node to detatch.
 		*
 		*/
-		void Detatch(Node * node);
-		void Detatch(Group * group);
+		void Detatch(Node & node);
+
+		/**
+		* @breif Compare operator between services.
+		*
+		*/
+		bool operator == (const Service & service);
+		bool operator != (const Service & service);
 
 	private:
 
@@ -171,13 +163,14 @@ namespace dof
 		*/
 		Service(const Service & service);
 
-		Balancer &				m_Balancer;			///< Reference to balancer.
-		eProtocol				m_Protocol;			///< Communication protocol.
-		unsigned short			m_PeerPort;			///< Peer connection port.
-		unsigned short			m_NodePort;			///< Communication port of nodes.
-		unsigned int			m_MaxConnections;	///< Max concurrent connections. Not used if protocol = Udp.
-		unsigned int			m_SessionTimeout;	///< Session timeout in seconds.
-		Safe<std::set<Node *>>	m_Nodes;			///< Set of associated nodes.
+		Balancer &					m_Balancer;			///< Reference to balancer.
+		std::string					m_Name;				///< Name of service.
+		Network::Protocol::eType	m_Protocol;			///< Communication protocol.
+		unsigned short				m_PeerPort;			///< Peer connection port.
+		unsigned short				m_MonitorPort;		///< Monitoring port of nodes.
+		unsigned int				m_MaxConnections;	///< Max concurrent connections. Not used if protocol = Udp.
+		unsigned int				m_SessionTimeout;	///< Session timeout in seconds.
+		Safe<std::set<Node *>>		m_Nodes;			///< Set of associated nodes.
 		
 
 	};
