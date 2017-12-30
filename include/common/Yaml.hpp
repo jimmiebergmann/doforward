@@ -120,6 +120,7 @@ namespace dof
 			*/
 			~Node();
 
+
 			bool IsNull() const;
 
 			bool IsScalar() const;
@@ -128,14 +129,36 @@ namespace dof
 
 			bool IsMapping() const;
 
+
 			Scalar & AsScalar() const;
+
+			Sequence & AsSequence() const;
 
 			Mapping & AsMapping() const;
 
-			template<class T>
-			T Value() const;
+			Node & Clear();
 
-			void Clear();
+			Scalar & ClearAsScalar();
+
+			Sequence & ClearAsSequence();
+
+			Mapping & ClearAsMapping();
+
+
+			template<class T>
+			T Value() const
+			{
+				if (m_pDataItem == nullptr || m_Type != ScalarType)
+				{
+					T tempValue = T();
+					return tempValue;
+				}
+				Scalar * pScalar = static_cast<Scalar *>(m_pDataItem);
+				return pScalar->Value<T>();
+			}
+
+			size_t Size() const;
+
 
 			Node & operator = (const std::string & string);
 			Node & operator = (const int number);
@@ -144,6 +167,7 @@ namespace dof
 			Node & operator = (const double number);
 			Node & operator = (const Node & node);
 			Node & operator = (const Scalar & scalar);
+			Node & operator = (const Sequence & sequence);
 			Node & operator = (const Mapping & mapping);
 			Node & operator [](const int index);
 			Node & operator [](const std::string & key);
@@ -182,6 +206,7 @@ namespace dof
 
 			Scalar(const Scalar & scalar);
 
+			Scalar(const char * characters);
 			Scalar(const std::string & string);
 			Scalar(const int number);
 			Scalar(const long long number);
@@ -190,10 +215,27 @@ namespace dof
 
 			~Scalar();
 
-			Node & GetNode() const;
+			Node & AsNode() const;
+
 
 			template<class T>
-			T Value() const;
+			T Value() const
+			{
+				std::stringstream ss(m_Value);
+				T value;
+				ss >> value;
+				if (ss.fail())
+				{
+					value = T();
+				}
+				return value;
+			}
+
+			template<>
+			std::string Value<std::string>() const
+			{
+				return m_Value;
+			}
 
 			void Clear();
 
@@ -217,14 +259,19 @@ namespace dof
 		public:
 
 			friend class Node;
+			friend class Reader;
 
 			Sequence();
 
 			~Sequence();
 
-			Node & GetNode() const;
+			Node & AsNode() const;
 
 			Node & operator [](const int index);
+
+			Node & Append();
+
+			size_t Size() const;
 
 			void Clear();
 
@@ -253,9 +300,11 @@ namespace dof
 
 			~Mapping();
 
-			Node & GetNode() const;
+			Node & AsNode() const;
 
 			Node & operator [](const std::string & key);
+
+			size_t Size() const;
 
 			void Clear();
 
@@ -286,7 +335,6 @@ namespace dof
 			void ReadFromFile(const std::string & filename, Node & root);
 
 			void ReadFromMemory(const std::string & string, Node & root);
-
 			void ReadFromMemory(const char * data, const int dataSize, Node & root);
 
 			void ReadFromStream(std::stringstream & stream, Node & root);
@@ -324,7 +372,7 @@ namespace dof
 			/**
 			* @breif Get key map of current line.
 			*
-			* @param valueStart[out] Start position of key value.
+			* @param valueStart[out] Start position of value.
 			*
 			* @throw ParsingError
 			*
@@ -344,8 +392,12 @@ namespace dof
 			* @return true if successful, false if end of stream(no line data).
 			*
 			*/
-			bool Reader::ReadNextLine(std::string & line, size_t & offset);
+			bool ReadNextLine(std::string & line, size_t & offset);
 
+			/**
+			* @breif Temporary data for parsing.
+			*
+			*/
 			struct ReaderData
 			{
 				ReaderData(std::stringstream & stream);
@@ -354,764 +406,13 @@ namespace dof
 				size_t StartOffset;
 				size_t CurrentOffset;
 				std::string Line;
+				size_t LineNo;
 				
 			};
 
-
-			ReaderData * m_pData;
-
-			/*bool FindStart();
-
-			void ParseLine(const std::string & line);
-
-			void ParseList(const std::string & line);
-
-			void ParseObject(const std::string & line);
-
-			std::string TrimSpaces(const std::string & text);*/
-
-			/*std::stack<std::pair<int, Value *>> m_ValueStack;
-			std::stringstream *					m_pStream;
-			Value *								m_pCurrentValue;
-			int									m_CurrentLevel;
-			int									m_StartLevel;*/
+			ReaderData * m_pData; ///< Temporary data for partsing.
 
 		};
-		
-
-		/**
-		* @breif Static declarations.
-		*
-		*/
-		static Node		EmptyNode;
-		static Scalar	EmptyScalar;
-		static Mapping	EmptyMapping;
-
-
-		/**
-		*	Exception implementations.
-		*/
-		ParsingError::ParsingError(const std::string & message) :
-			Exception(Exception::Yaml, message)
-		{
-		}
-
-		InternalError::InternalError(const std::string & message) :
-			Exception(Exception::Yaml, message)
-		{
-		}
-
-
-		/**
-		*	Node implementation.
-		*/
-		Node::Node(const eType type) :
-			m_Type(type),
-			m_pParent(nullptr),
-			m_pChild(nullptr),
-			m_pDataItem(nullptr)
-		{
-			if (m_Type == ScalarType)
-			{
-				m_pDataItem = new Scalar(this);
-			}
-		}
-
-		Node::~Node()
-		{
-		}
-
-		bool Node::IsNull() const
-		{
-			return m_Type == NullType;
-		}
-
-		bool Node::IsScalar() const
-		{
-			return m_Type == ScalarType;
-		}
-
-		bool Node::IsSequence() const
-		{
-			return m_Type == SequenceType;
-		}
-
-		bool Node::IsMapping() const
-		{
-			return m_Type == MappingType;
-		}
-
-		Scalar & Node::AsScalar() const
-		{
-			if (m_pDataItem == nullptr || m_Type != ScalarType)
-			{
-				EmptyScalar.Clear();
-				return EmptyScalar;
-			}
-
-			return *static_cast<Scalar *>(m_pDataItem);
-		}
-
-		Mapping & Node::AsMapping() const
-		{
-			if (m_pDataItem == nullptr || m_Type != MappingType)
-			{
-				EmptyMapping.Clear();
-				return EmptyMapping;
-			}
-
-			return *static_cast<Mapping *>(m_pDataItem);
-		}
-
-		template<class T>
-		T Node::Value() const
-		{
-			if (m_pDataItem == nullptr || m_Type != ScalarType)
-			{
-				T tempValue = T();
-				return tempValue;
-			}
-
-			Scalar * pScalar = static_cast<Scalar *>(m_pDataItem);
-
-			return pScalar->Value<T>();
-		}
-
-		void Node::Clear()
-		{
-			this->m_Type = NullType;
-			this->m_pParent = nullptr;
-			//this->m_pChild = nullptr;
-			
-			//this->m_pDataItem = nullptr;
-
-			/// NEED IMPLEMENTATION OF CLEANING.
-		}
-
-		Node & Node::operator = (const std::string & string)
-		{
-			Scalar * pScalar = nullptr;
-
-			if (m_Type != ScalarType)
-			{
-				if (m_pDataItem != nullptr)
-				{
-					delete m_pDataItem;
-				}
-
-				m_Type = ScalarType;
-				pScalar = new Scalar(this);
-				m_pDataItem = pScalar;
-			}
-			else
-			{
-				pScalar = static_cast<Scalar *>(m_pDataItem);
-			}
-
-			pScalar->m_Value = string;
-			return *this;
-		}
-
-		Node & Node::operator = (const int number)
-		{
-			return *this = std::to_string(number);
-		}
-
-		Node & Node::operator = (const long long number)
-		{
-			return *this = std::to_string(number);
-		}
-
-		Node & Node::operator = (const float number)
-		{
-			return *this = std::to_string(number);
-		}
-
-		Node & Node::operator = (const double number)
-		{
-			return *this = std::to_string(number);
-		}
-
-		Node & Node::operator = (const Node & node)
-		{
-			if (node.m_Type == ScalarType)
-			{
-				return *this = node.AsScalar().m_Value;
-			}
-
-			/// NEED MORE CODE HERE... MISSING CODE.
-
-			return *this;
-		}
-
-		Node & Node::operator = (const Scalar & scalar)
-		{
-			return *this = scalar.m_Value;
-		}
-
-		Node & Node::operator = (const Mapping & mapping)
-		{
-			return *this;
-		}
-
-		Node & Node::operator [](const int index)
-		{
-			Sequence * pSequence = nullptr;
-
-			if (m_Type == SequenceType && m_pDataItem != nullptr)
-			{
-				pSequence = static_cast<Sequence *>(m_pDataItem);
-			}
-			else if (m_Type == NullType)
-			{
-				m_Type = SequenceType;
-				pSequence = new Sequence(this);
-				m_pDataItem = pSequence;
-			}
-			else
-			{
-				EmptyNode.Clear();
-				return EmptyNode;
-			}
-
-			return (*pSequence)[index];
-		}
-
-		Node & Node::operator [](const std::string & key)
-		{
-			Mapping * pMapping = nullptr;
-
-			if (m_Type == MappingType && m_pDataItem != nullptr)
-			{
-				pMapping = static_cast<Mapping *>(m_pDataItem);
-			}
-			else if (m_Type == NullType)
-			{
-				m_Type = MappingType;
-				pMapping = new Mapping(this);
-				m_pDataItem = pMapping;
-			}
-			else
-			{
-				EmptyNode.Clear();
-				return EmptyNode;
-			}
-
-			return (*pMapping)[key];
-		}
-
-		Node::Node(const Node & value)
-		{
-			throw InternalError("Not supporting Node copy yet.");
-		}
-
-		Node::Node(Scalar * scalar) :
-			m_Type(ScalarType),
-			m_pParent(nullptr),
-			m_pChild(nullptr),
-			m_pDataItem(scalar)
-		{
-			if (m_pDataItem == nullptr)
-			{
-				throw InternalError("Scalar is nullptr, passed to node constructor.");
-			}
-		}
-
-		Node::Node(Sequence * sequence) :
-			m_Type(SequenceType),
-			m_pParent(nullptr),
-			m_pChild(nullptr),
-			m_pDataItem(sequence)
-		{
-			if (m_pDataItem == nullptr)
-			{
-				throw InternalError("Scalar is nullptr, passed to node constructor.");
-			}
-		}
-
-		Node::Node(Mapping * mapping) :
-			m_Type(MappingType),
-			m_pParent(nullptr),
-			m_pChild(nullptr),
-			m_pDataItem(mapping)
-		{
-			if (m_pDataItem == nullptr)
-			{
-				throw InternalError("Mapping is nullptr, passed to node constructor.");
-			}
-		}
-		
-
-		/**
-		*	Scalar implementation.
-		*/
-		Scalar::Scalar() :
-			m_pNode(new Node(this)),
-			m_Value("")
-		{
-		}
-
-		Scalar::Scalar(const Scalar & scalar) :
-			m_Value(scalar.m_Value)
-		{
-		}
-
-		Scalar::Scalar(const std::string & string) :
-			m_pNode(new Node(this))
-		{
-			m_Value = string;
-		}
-		Scalar::Scalar(const int number) :
-			m_pNode(new Node(this))
-		{
-			m_Value = std::to_string(number);
-		}
-
-		Scalar::Scalar(const long long number) :
-			m_pNode(new Node(this))
-		{
-			m_Value = std::to_string(number);
-		}
-
-		Scalar::Scalar(const float number) :
-			m_pNode(new Node(this))
-		{
-			m_Value = std::to_string(number);
-		}
-
-		Scalar::Scalar(const double number) :
-			m_pNode(new Node(this))
-		{
-			m_Value = std::to_string(number);
-		}
-
-		Scalar::~Scalar()
-		{
-
-		}
-
-		Node & Scalar::GetNode() const
-		{
-			if (m_pNode == nullptr)
-			{
-				EmptyNode.Clear();
-				return EmptyNode;
-			}
-			return *m_pNode;
-		}
-
-		template<class T>
-		T Scalar::Value() const
-		{
-			std::stringstream ss(m_Value);
-			T value;
-			ss >> value;
-			if (ss.fail())
-			{
-				value = T();
-			}
-			return value;
-		}
-
-		template<>
-		std::string Scalar::Value() const
-		{
-			return m_Value;
-		}
-		
-		void Scalar::Clear()
-		{
-			/// NEED FIX.
-			/// WE NEED TO DISCONNECT ANY PARENT NODES.
-			m_pNode = nullptr;
-			m_Value = "";
-		}
-		
-		Scalar::Scalar(Node * node) :
-			m_pNode(node),
-			m_Value("")
-		{
-			if (m_pNode == nullptr)
-			{
-				throw InternalError("Node is nullptr, passed to scalar constructor.");
-			}
-		}
-
-
-		/**
-		*	Sequence implementation.
-		*/
-		Sequence::Sequence() :
-			m_pNode(new Node(this))
-		{
-
-		}
-
-		Sequence::~Sequence()
-		{
-
-		}
-
-		Node & Sequence::GetNode() const
-		{
-			if (m_pNode == nullptr)
-			{
-				EmptyNode.Clear();
-				return EmptyNode;
-			}
-			return *m_pNode;
-		}
-
-		Node & Sequence::operator [](const int index)
-		{
-			auto it = m_Childs.find(index);
-			if (it != m_Childs.end())
-			{
-				return *it->second;
-			}
-
-			Node * pNode = new Node();
-			m_Childs.insert({ index, pNode });
-			return *pNode;
-		}
-
-		void Sequence::Clear()
-		{
-			/// NEED FIX.
-			/// WE NEED TO DISCONNECT ANY PARENT NODES.
-			m_pNode = nullptr;
-			m_Childs.clear();
-		}
-
-		Sequence::Sequence(Node * node) :
-			m_pNode(node)
-		{
-			if (m_pNode == nullptr)
-			{
-				throw InternalError("Node is nullptr, passed to sequence constructor.");
-			}
-		}
-
-
-		/**
-		*	Scalar implementation.
-		*/
-		Mapping::Mapping() :
-			m_pNode(new Node(this))
-		{
-		}
-
-		Mapping::~Mapping()
-		{
-		}
-
-		Node & Mapping::GetNode() const
-		{
-			if (m_pNode == nullptr)
-			{
-				EmptyNode.Clear();
-				return EmptyNode;
-			}
-			return *m_pNode;
-		}
-
-		Node & Mapping::operator [](const std::string & key)
-		{
-			auto it = m_Childs.find(key);
-			if (it != m_Childs.end())
-			{
-				return *it->second;
-			}
-
-			Node * pNode = new Node();
-			m_Childs.insert({key, pNode});
-			return *pNode;
-		}
-
-		void Mapping::Clear()
-		{
-			/// NEED FIX.
-			/// WE NEED TO DISCONNECT ANY PARENT NODES.
-			m_pNode = nullptr;
-			m_Childs.clear();
-		}
-
-		Mapping::Mapping(Node * node) :
-			m_pNode(node)
-		{
-			if (m_pNode == nullptr)
-			{
-				throw InternalError("Node is nullptr, passed to mapping constructor.");
-			}
-		}
-
-
-		/**
-		*	Reader implementation.
-		*/
-		Reader::Reader() :
-			m_pData(nullptr)
-		{
-		}
-
-		Reader::~Reader()
-		{
-			if (m_pData)
-			{
-				delete m_pData;
-			}
-		}
-
-		void Reader::ReadFromFile(const std::string & filename, Node & root)
-		{
-			std::ifstream file(filename, std::ifstream::binary);
-			if (file.is_open() == false)
-			{
-				throw ParsingError("Cannot open file.");
-			}
-
-			file.seekg(0, file.end);
-			size_t fileSize = file.tellg();
-			file.seekg(0, file.beg);
-
-			std::unique_ptr<char []> data(new char[fileSize]);
-			file.read(data.get(), fileSize);
-			file.close();
-
-			ReadFromMemory(data.get(), fileSize, root);
-		}
-
-		void Reader::ReadFromMemory(const std::string & string, Node & root)
-		{
-			ReadFromMemory(string.c_str(), string.size(), root);
-		}
-
-		void Reader::ReadFromMemory(const char * data, const int dataSize, Node & root)
-		{
-			std::stringstream ss(std::string(data, dataSize));
-			ReadFromStream(ss, root);
-		}
-
-		void Reader::ReadFromStream(std::stringstream & stream, Node & root)
-		{
-			if (m_pData)
-			{
-				delete m_pData;
-			}
-			m_pData = new ReaderData(stream);
-
-			try
-			{
-				Parse(root);
-			}
-			catch (...)
-			{
-				delete m_pData;
-				m_pData = nullptr;
-				throw;
-			}
-
-			delete m_pData;
-			m_pData = nullptr;
-		}
-
-		void Reader::Parse(Node & root)
-		{
-			root.Clear();
-
-			std::string & line = m_pData->Line;
-			size_t & startOffset = m_pData->StartOffset;
-
-			// Get first line, ignore document start: "---".
-			if (ReadNextLine(line, startOffset) == false)
-			{
-				return;
-			}
-			if (line.size() >= 3 && line.substr(0, 3) == "---")
-			{
-				if (ReadNextLine(line, startOffset) == false)
-				{
-					return;
-				}
-			}
-
-			m_pData->CurrentOffset = startOffset;
-
-			// Sequence.
-			if (line[0] == '-')
-			{
-				ParseSequence(root = new Sequence());
-				return;
-			}
-
-			// Mapping.
-			if (isalnum(line[0]))
-			{
-				ParseMapping(root = new Mapping());
-				return;
-			}
-
-			throw ParsingError("Root not of type sequence of mapping.");
-		}
-
-		bool Reader::ParseSequence(Node & node)
-		{
-			return false;
-		}
-
-		bool Reader::ParseMapping(Node & node)
-		{
-			// Find keyword
-			size_t valueStart = 0;
-			std::string key = "";
-			size_t offset = 0;
-			
-			while (1)
-			{
-				key = FindKeyword(valueStart);
-
-				// Mapping or sequence value of current mapping.
-				if (valueStart == std::string::npos)
-				{
-					// Get next line.
-					if (ReadNextLine(m_pData->Line, offset) == false)
-					{
-						throw InternalError("Excepting Sequence/Mapping of next line.");
-					}
-
-					// Invalid if offset is higher than current.
-					if (offset <= m_pData->CurrentOffset)
-					{
-						throw InternalError("Offset of next line is incorrect.");
-					}
-					m_pData->CurrentOffset = offset;
-
-					// Sequence.
-					if (m_pData->Line[0] == '-')
-					{
-						throw InternalError("Sequence of map not yet implemented.");
-						/// return ParseSequence(new Sequence());
-					}
-
-					// Mapping.
-					if (isalnum(m_pData->Line[0]))
-					{
-						Mapping * pMapping = new Mapping();
-						node[key] = pMapping;
-
-						return ParseMapping(pMapping->GetNode());
-					}
-				}
-
-				// Scalar
-				node[key] = m_pData->Line.substr(valueStart);
-
-				// Get next line.
-				if (ReadNextLine(m_pData->Line, offset) == false)
-				{
-					return false;
-				}
-
-				// Current mapping is done.
-				if (offset < m_pData->CurrentOffset)
-				{
-					return true;
-				}
-
-				// Invalid if offset is higher than current.
-				if (offset > m_pData->CurrentOffset)
-				{
-					throw InternalError("Offset of next line is incorrect.");
-				}
-
-				m_pData->CurrentOffset = offset;
-			}
-
-			return true;
-		}
-
-		std::string Reader::FindKeyword(size_t & valueStart)
-		{
-			size_t end = m_pData->Line.find_first_of(':');
-			if (end == std::string::npos)
-			{
-				throw ParsingError("Failed to find keyword.");
-			}
-			std::string key = m_pData->Line.substr(0, end);
-
-			// No value of key.
-			valueStart = key.size() + 1;
-			if (valueStart >= m_pData->Line.size())
-			{
-				valueStart = std::string::npos;
-				return key;
-			}
-
-			valueStart = m_pData->Line.find_first_not_of(' ', valueStart);
-			return key;
-		}
-
-
-		bool Reader::ReadNextLine(std::string & line, size_t & offset)
-		{
-			while(1)
-			{
-				std::getline(m_pData->Stream, line);
-
-				if (m_pData->Stream.eof())
-				{
-					return false;
-				}
-				if (m_pData->Stream.fail())
-				{
-					throw ParsingError("Failed to read line from stream.");
-				}
-
-				if (line.size() == 0)
-				{
-					continue;
-				}
-
-				if (line.find_first_of('\t') != std::string::npos)
-				{
-					throw ParsingError("Tabs are not allowed in YAML.");
-				}
-
-				size_t startPos = line.find_first_not_of(' ');
-				if (startPos == std::string::npos)
-				{
-					continue;
-				}
-				offset = startPos;
-
-				auto endPos = line.find_last_not_of(' ');
-				line = line.substr(startPos, endPos - startPos + 1);
-
-				if (line[0] == '#')
-				{
-					continue;
-				}
-				if (line.size() >= 3 && line.substr(0, 3) == "...")
-				{
-					return false;
-				}
-
-				break;
-			}
-
-			return true;
-		}
-
-		Reader::ReaderData::ReaderData(std::stringstream & stream) :
-			Stream(stream),
-			StartOffset(0),
-			CurrentOffset(0),
-			Line("")
-		{
-
-		}
-
-
 		
 	}
 

@@ -136,10 +136,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\source\common\Exception.cpp" />
+    <ClCompile Include="..\..\source\common\Socket.cpp" />
+    <ClCompile Include="..\..\source\common\socket\TcpListener.cpp" />
+    <ClCompile Include="..\..\source\common\socket\TcpSocket.cpp" />
+    <ClCompile Include="..\..\source\common\Yaml.cpp" />
     <ClCompile Include="..\..\source\server\Balancer.cpp" />
     <ClCompile Include="..\..\test\server\ServerTests.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\include\common\Exception.hpp" />
+    <ClInclude Include="..\..\include\common\Safe.hpp" />
+    <ClInclude Include="..\..\include\common\Socket.hpp" />
+    <ClInclude Include="..\..\include\common\socket\TcpListener.hpp" />
+    <ClInclude Include="..\..\include\common\socket\TcpSocket.hpp" />
+    <ClInclude Include="..\..\include\common\Yaml.hpp" />
     <ClInclude Include="..\..\include\server\Balancer.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

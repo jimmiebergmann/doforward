@@ -25,6 +25,7 @@
 
 #include <Balancer.hpp>
 #include <Exception.hpp>
+#include <iostream>
 
 namespace dof
 {
@@ -42,10 +43,11 @@ namespace dof
 
 	void Balancer::Config::LoadFromFile(const std::string & filename)
 	{
-
+		Yaml::Reader reader;
+		reader.ReadFromFile(filename, m_ConfigRoot);
 	}
 
-	bool Balancer::Config::SaveToFile(const std::string & path)
+	bool Balancer::Config::SaveToFile(const std::string & filename)
 	{
 		return false;
 	}

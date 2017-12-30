@@ -12,10 +12,10 @@
     <ClCompile Include="..\..\test\common\CommonTests.cpp">
       <Filter>tests</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\common\Yaml.cpp">
+    <ClCompile Include="..\..\source\common\Exception.cpp">
       <Filter>common</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\common\Exception.cpp">
+    <ClCompile Include="..\..\source\common\Yaml.cpp">
       <Filter>common</Filter>
     </ClCompile>
   </ItemGroup>

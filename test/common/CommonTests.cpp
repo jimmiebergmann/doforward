@@ -32,33 +32,45 @@ using namespace dof::Yaml;
 int main()
 {
 	std::string file =
-		"root1:  \n"
-		"  key1: value1\n";
-
-
+		"root1: \n"
+		"    - \n"
+		"      foo: 5 \n"
+		"      bar: 6 \n"
+	 	"    - bar: 7 \n"
+	    "test: hello world \n"
+		"data: \n"
+		"    test: hello world 2\n";
+	
 
 	Node root;
 	Reader reader;
 	reader.ReadFromMemory(file, root);
 
 
-	Node & foo1 = root["root1"];
-	Node & foo2 = foo1["key1"];
+	std::cout << root["root1"][0]["foo"].Value<std::string>() << std::endl;
+	std::cout << root["root1"][0]["bar"].Value<std::string>() << std::endl;
+	std::cout << root["root1"][1]["bar"].Value<std::string>() << std::endl;
+	std::cout << root["test"].Value<std::string>() << std::endl;
+	std::cout << root["data"]["test"].Value<std::string>() << std::endl;
+	//std::cout << root["root1"][1].Value<std::string>() << std::endl;
 
-	std::cout << "TEST: " << &foo1 << std::endl;
-	std::cout << "TEST: " << &foo2 << std::endl;
+	/*Node & root1 = root["root1"];
+	Node & root2 = root1["root2"];
 
-	std::cout << root["root1"]["key1"].Value<std::string>() << std::endl;
+	Node & root3 = root["root3"];
 
-	/*root["foo"] = "bar";
-	root["hello"] = Scalar("world");
-	
-
-	Scalar & a = root["foo"].AsScalar();
-	Scalar & b = root["hello"].AsScalar();
+	Node & root4 = root["root4"];
+	Node & root5 = root4[0];
+	Node & root6 = root4[1];
+	*/
 
 
-	int c = 5;*/
+	/*std::cout << root["root1"]["root2"].Value<std::string>() << std::endl;
+	std::cout << root["root1"]["root3"].Value<std::string>() << std::endl;
+	std::cout << root["root4"].Value<std::string>() << std::endl;*/
+	//std::cout << root["root4"][0].Value<std::string>() << std::endl;
+	//std::cout << root["root4"][1].Value<std::string>() << std::endl;
+
 
 	std::cin.get();
 	return 0;

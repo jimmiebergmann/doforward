@@ -23,15 +23,48 @@
 *
 */
 
+
 #include <Balancer.hpp>
 #include <iostream>
+#include <algorithm>
 
-int main()
+int main(int argc, char ** argv)
 {
+	// Get configuration path
+	std::string configPath = "";
+	if (argc > 1)
+	{
+		configPath = argv[1];
+	}
+	else
+	{
+		configPath = argv[0];
+		size_t pathEnd1 = configPath.find_last_of('/');
+		size_t pathEnd2 = configPath.find_last_of('\\');
+		size_t pathEnd = std::min(pathEnd1, pathEnd2);
+		if (pathEnd != std::string::npos)
+		{
+			configPath = configPath.substr(0, pathEnd);
+		}
+
+		configPath += "/doforward.conf";
+	}
+
+	// Load balancer configurations.
+	dof::Balancer::Config config;
+	try
+	{
+		config.LoadFromFile(configPath);
+	}
+	catch (const dof::Exception & e)
+	{
+		std::cerr << "Excption: " << e.GetCode() << " - " << e.GetMessage() << std::endl;
+		return 0;
+	}
+
+	// Run balancer with loaded configurations.
 	dof::Balancer balancer;
-	//balancer.Set(50);
-
-	//std::cout << "Balancer test: " << balancer.Get() << std::endl;
-
+	balancer.Run(config);
+	balancer.Finish();
 	return 0;
 }

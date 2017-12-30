@@ -25,8 +25,9 @@
 
 #pragma once
 
-#include <string>
 #include <Node.hpp>
+#include <Yaml.hpp>
+#include <string>
 #include <map>
 
 namespace dof
@@ -94,6 +95,8 @@ namespace dof
 
 		public:
 
+			friend class Balancer;
+
 			/**
 			* @breif Default constructor.
 			*
@@ -125,11 +128,11 @@ namespace dof
 			* @return True if valid path, else false.
 			*
 			*/
-			virtual bool SaveToFile(const std::string & path);
+			virtual bool SaveToFile(const std::string & filename);
 
 		private:
 
-			// ...
+			Yaml::Node m_ConfigRoot;
 
 		};
 
