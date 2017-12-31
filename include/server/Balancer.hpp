@@ -204,7 +204,7 @@ namespace dof
 
 		/**
 		* @breif Remove service from balancer.
-		*		 The service will be destroyed and deallocated.
+		*		 The service will be destroyed and deallocated if "deallocate" flag is true.
 		*
 		* @return True if removed, false if service is not found.
 		*
@@ -240,11 +240,12 @@ namespace dof
 		/**
 		* @breif Remove node from balancer and detatch from service.
 		*		 The service will be destroyed and deallocated.
+		*		 Node will not be detached from service if "callFromService" is true.
 		*
 		* @return True if removed, false if service is not found.
 		*
 		*/
-		bool RemoveNode(Node & node);
+		bool RemoveNode(Node & node, const bool callFromService = false);
 
 		/**
 		* @breif Get node.

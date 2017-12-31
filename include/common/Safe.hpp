@@ -72,7 +72,6 @@ namespace dof
 		*/
 		~Safe()
 		{
-			Mutex.unlock();
 		}
 
 		/**

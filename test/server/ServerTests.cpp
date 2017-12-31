@@ -30,8 +30,6 @@
 int main()
 {
 	dof::Balancer b;
-
-	//std::cout << b.Get() << std::endl;
 	
 
 	

@@ -89,6 +89,11 @@ namespace dof
 	{
 		LoadConfig(config);
 
+		//RemoveNode(GetNode("test node 1"));
+		RemoveService(GetService("test 1"));
+
+		int foo = 2;
+
 		// ...
 	}
 
@@ -104,6 +109,11 @@ namespace dof
 
 	bool Balancer::AddService(Service & service)
 	{
+		if (service == InvalidService)
+		{
+			return false;
+		}
+
 		SafeGuard sf1(m_Services);
 		SafeGuard sf2(m_ServicesName);
 		SafeGuard sf3(m_ServicesPortProto);
@@ -182,6 +192,11 @@ namespace dof
 
 	bool Balancer::AddNode(Node & node, Service & service)
 	{
+		if (node == InvalidNode || service == InvalidService)
+		{
+			return false;
+		}
+
 		SafeGuard sf1(m_Nodes);
 		SafeGuard sf2(m_NodesName);
 		SafeGuard sf3(m_NodesAddressPortProto);
@@ -213,7 +228,7 @@ namespace dof
 		return true;
 	}
 
-	bool Balancer::RemoveNode(Node & node)
+	bool Balancer::RemoveNode(Node & node, const bool callFromService)
 	{
 		SafeGuard sf1(m_Nodes);
 		SafeGuard sf2(m_NodesName);
@@ -224,14 +239,17 @@ namespace dof
 		{
 			return false;
 		}
-
-		Node * pNode = &node;
-		Service & service = node.GetService();
-		if (service != InvalidService)
+		
+		if (callFromService == false)
 		{
-			service.Detatch(node);
+			Service & service = node.GetService();
+			if (service != InvalidService)
+			{
+				service.Detatch(node);
+			}
 		}
 
+		Node * pNode = &node;
 		m_Nodes.Value.erase(pNode);
 		m_NodesName.Value.erase(node.GetName());
 		m_NodesAddressPortProto.Value.erase({ node.GetAddress(), node.GetPort(), node.GetProtocol() });
@@ -299,11 +317,10 @@ namespace dof
 	{
 		// Get and validate service data.
 		const std::string default_name = GetNextServiceName();
-		std::string name				= service["name"].Value<std::string>(default_name);
+		std::string name				= service["name"].Value<std::string>();
 		std::string protocol_str		= service["protocol"].Value<std::string>("");
 		unsigned short peer_port		= service["peer_port"].Value<unsigned short>(0);
-		std::string monitor				= service["monitor"].Value<std::string>("");
-		unsigned short monitor_port		= service["monitor_port"].Value<unsigned short>(0);
+		unsigned short monitor_port		= service["node_monitor"].Value<unsigned short>(0);
 		unsigned int max_connections	= service["max_connections"].Value<unsigned short>(256);
 		std::string session				= service["session"].Value<std::string>("15m");
 
@@ -326,11 +343,6 @@ namespace dof
 		if (peer_port == 0)
 		{
 			throw Exception(Exception::ValidationError, "Config - Peer port of service no. " + std::to_string(index) + " is missing or 0.");
-		}
-		std::transform(monitor.begin(), monitor.end(), monitor.begin(), ::tolower);
-		if (monitor == "disabled" || monitor == "false" || monitor == "0")
-		{
-			monitor_port = 0;
 		}
 
 		std::transform(session.begin(), session.end(), session.begin(), ::tolower);
@@ -368,7 +380,7 @@ namespace dof
 	{
 		// Get and validate node data.
 		const std::string default_name = GetNextNodeName();
-		std::string name =			node["name"].Value<std::string>(default_name);
+		std::string name =			node["name"].Value<std::string>();
 		std::string protocol_str =  node["protocol"].Value<std::string>("");
 		std::string ip =			node["ip"].Value<std::string>("");
 		unsigned short port =		node["port"].Value<unsigned short>(0);

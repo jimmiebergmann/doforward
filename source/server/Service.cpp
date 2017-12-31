@@ -66,8 +66,7 @@ namespace dof
 		SafeGuard sf(m_Nodes);
 		for (auto it = m_Nodes.Value.begin(); it != m_Nodes.Value.end(); it++)
 		{
-			Node * pNode = *it;
-			delete pNode;
+			m_Balancer.RemoveNode(*(*it), true);
 		}
 	}
 

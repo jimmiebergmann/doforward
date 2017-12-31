@@ -165,7 +165,7 @@ namespace dof
 					return defaultValue;
 				}
 				Scalar * pScalar = static_cast<Scalar *>(m_pDataItem);
-				return pScalar->Value<T>();
+				return pScalar->Value<T>(defaultValue);
 			}
 
 			size_t Size() const;
@@ -242,8 +242,27 @@ namespace dof
 				return value;
 			}
 
+			template<class T>
+			T Value(const T & defaultValue) const
+			{
+				std::stringstream ss(m_Value);
+				T value;
+				ss >> value;
+				if (ss.fail())
+				{
+					return defaultValue;
+				}
+				return value;
+			}
+
 			template<>
 			std::string Value<std::string>() const
+			{
+				return m_Value;
+			}
+
+			template<>
+			std::string Value<std::string>(const std::string & defaultValue) const
 			{
 				return m_Value;
 			}
