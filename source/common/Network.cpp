@@ -23,23 +23,24 @@
 *
 */
 
-#pragma once
+#include <Network.hpp>
+#include <Exception.hpp>
+#include <WinSock2.h>
 
 namespace dof
 {
-
+	
 	namespace Network
 	{
 
-		class TcpListener
+		void Initialize()
 		{
-
-		public:
-
-			TcpListener();
-
-
-		};
+			WSADATA wsaData;
+			if (WSAStartup(MAKEWORD(2, 2), &wsaData))
+			{
+				throw Exception(Exception::Network, "Failed to initialize winsock.");
+			}
+		}
 
 	}
 

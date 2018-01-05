@@ -25,18 +25,22 @@
 
 #pragma once
 
+#include <network/Socket.hpp>
+
 namespace dof
 {
 
 	namespace Network
 	{
 
-		class TcpListener
+		class UdpSocket : public Socket
 		{
 
 		public:
 
-			TcpListener();
+			UdpSocket();
+
+			~UdpSocket();
 
 
 		};

@@ -99,6 +99,9 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
     </ClCompile>
+    <Link>
+      <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -108,6 +111,9 @@
       <AdditionalIncludeDirectories>
       </AdditionalIncludeDirectories>
     </ClCompile>
+    <Link>
+      <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -120,6 +126,7 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -133,11 +140,18 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\common\Exception.cpp" />
-    <ClCompile Include="..\..\source\common\Socket.cpp" />
+    <ClCompile Include="..\..\source\common\Network.cpp" />
+    <ClCompile Include="..\..\source\common\network\Address.cpp" />
+    <ClCompile Include="..\..\source\common\network\Socket.cpp" />
+    <ClCompile Include="..\..\source\common\network\TcpListener.cpp" />
+    <ClCompile Include="..\..\source\common\network\TcpSocket.cpp" />
+    <ClCompile Include="..\..\source\common\network\UdpSocket.cpp" />
+    <ClCompile Include="..\..\source\common\Semaphore.cpp" />
     <ClCompile Include="..\..\source\common\Yaml.cpp" />
     <ClCompile Include="..\..\source\server\Balancer.cpp" />
     <ClCompile Include="..\..\source\server\Node.cpp" />
@@ -147,8 +161,13 @@
   <ItemGroup>
     <ClInclude Include="..\..\include\common\Exception.hpp" />
     <ClInclude Include="..\..\include\common\Network.hpp" />
+    <ClInclude Include="..\..\include\common\network\Address.hpp" />
+    <ClInclude Include="..\..\include\common\network\Socket.hpp" />
+    <ClInclude Include="..\..\include\common\network\TcpListener.hpp" />
+    <ClInclude Include="..\..\include\common\network\TcpSocket.hpp" />
+    <ClInclude Include="..\..\include\common\network\UdpSocket.hpp" />
     <ClInclude Include="..\..\include\common\Safe.hpp" />
-    <ClInclude Include="..\..\include\common\Socket.hpp" />
+    <ClInclude Include="..\..\include\common\Semaphore.hpp" />
     <ClInclude Include="..\..\include\common\Yaml.hpp" />
     <ClInclude Include="..\..\include\server\Balancer.hpp" />
     <ClInclude Include="..\..\include\server\Node.hpp" />

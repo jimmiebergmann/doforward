@@ -31,13 +31,14 @@ namespace dof
 	namespace Network
 	{
 
-		class TcpListener
+		class Socket
 		{
 
 		public:
 
-			TcpListener();
+			Socket();
 
+			virtual ~Socket();
 
 		};
 

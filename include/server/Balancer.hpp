@@ -28,6 +28,7 @@
 #include <Service.hpp>
 #include <Node.hpp>
 #include <Safe.hpp>
+#include <Semaphore.hpp>
 #include <Yaml.hpp>
 #include <string>
 #include <map>
@@ -67,9 +68,11 @@ namespace dof
 		*			/services/:
 		*				- name:				  service1
 		*				  protocol:			  tcp (tcp/udp/http/https)
-		*				  peer_port:		  12345
-		*				  /monitor/:          enabled
-		*				  /monitor_port/:     100
+		*				  /host/:		      123.123.123.123
+		*				  port:		          12345
+		*				  /monitor/:
+		*						host:         123.123.123.123
+		*						/port/:		  12345
 	    *				  /max_connections/:  *256*
 		*				  /session/:		  *30s*	(enabled = 30s/disabled = 0s/..s/..m/..h/..d) Ignored for http(s) protocol.
 		*				  /groups/:
@@ -78,7 +81,7 @@ namespace dof
 		*						
 		*				  /nodes/:
 		*						- protocol:			tcp (tcp/udp/http/https)
-		*		 				  ip:				123.123.123.123
+		*		 				  host:				123.123.123.123
 		*		 				  port:				12345
 		*
 		*						- ...
@@ -320,6 +323,8 @@ namespace dof
 		Safe<std::map<std::string, Node *>>				m_NodesName;				///< Map of nodes. Name as key.
 		Safe<std::map<AddressPortProtocolPair, Node *>>	m_NodesAddressPortProto;	///< Map of nodes. Address, Port and protocol as key.
 
+
+		Semaphore										m_StopSemaphore;			///< Sempahore for stopping balancer.
 		
 	};
 

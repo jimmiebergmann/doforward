@@ -26,6 +26,7 @@
 #pragma once
 
 #include <Network.hpp>
+#include <network/Address.hpp>
 #include <string>
 #include <Safe.hpp>
 #include <set>
@@ -69,7 +70,8 @@ namespace dof
 		Service(Balancer & balancer,
 				const std::string & name = "",
 				const Network::Protocol::eType protocol = Network::Protocol::Tcp,
-				const unsigned short peerPort = 0,
+				const Network::Address & host = Network::Address::EmptyIpv4,
+				const unsigned short port = 0,
 				const unsigned short monitorPort = 0,
 				const unsigned int sessionTimeout = 0,
 				const unsigned int maxConnections = 0,
@@ -81,6 +83,21 @@ namespace dof
 		*
 		*/
 		~Service();
+
+		/**
+		* @breif Start service.
+		*		 Service will start to listen for incoming node and peer connections.
+		*
+		* @throw Exception if startup of service fails.
+		*
+		*/
+		void Start();
+
+		/**
+		* @breif Stop service.
+		*
+		*/
+		void Stop();
 
 		/**
 		* @breif Get reference to balancer.
@@ -101,10 +118,16 @@ namespace dof
 		Network::Protocol::eType GetProtocol() const;
 
 		/**
-		* @breif Get peer connection port.
+		* @breif Get host address.
 		*
 		*/
-		unsigned short GetPeerPort() const;
+		const Network::Address & GetHost() const;
+
+		/**
+		* @breif Get host port.
+		*
+		*/
+		unsigned short GetPort() const;
 
 		/**
 		* @breif Get communication port of nodes.
@@ -166,12 +189,12 @@ namespace dof
 		Balancer &					m_Balancer;			///< Reference to balancer.
 		std::string					m_Name;				///< Name of service.
 		Network::Protocol::eType	m_Protocol;			///< Communication protocol.
-		unsigned short				m_PeerPort;			///< Peer connection port.
+		Network::Address			m_Host;				///< Host address.
+		unsigned short				m_Port;				///< Host port.
 		unsigned short				m_MonitorPort;		///< Monitoring port of nodes.
 		unsigned int				m_MaxConnections;	///< Max concurrent connections. Not used if protocol = Udp.
 		unsigned int				m_SessionTimeout;	///< Session timeout in seconds.
 		Safe<std::set<Node *>>		m_Nodes;			///< Set of associated nodes.
-		
 
 	};
 

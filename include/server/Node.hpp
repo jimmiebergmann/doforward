@@ -56,7 +56,7 @@ namespace dof
 		Node(Balancer & balancer,
 			const std::string & name = "",
 			const Network::Protocol::eType protocol = Network::Protocol::Tcp,
-			const std::string & address = "",
+			const Network::Address & host = 0,
 			unsigned short port = 0);
 
 		/**
@@ -92,13 +92,13 @@ namespace dof
 		Network::Protocol::eType GetProtocol() const;
 
 		/**
-		* @breif Get address of node.
+		* @breif Get host address of node.
 		*
 		*/
-		const std::string & GetAddress() const;
+		const Network::Address & GetHost() const;
 
 		/**
-		* @breif Get port of node.
+		* @breif Get host port of node.
 		*
 		*/
 		unsigned short GetPort() const;
@@ -122,7 +122,7 @@ namespace dof
 		Service *					m_pService;	///< Pointer to associated service.
 		std::string					m_Name;		///< Name of node.
 		Network::Protocol::eType	m_Protocol;	///< Communication protocol of node.
-		std::string					m_Address;	///< Ip adress of node.
+		Network::Address			m_Host;		///< Host adress of node.
 		unsigned short				m_Port;		///< Port used for node to connect to server.
 
 

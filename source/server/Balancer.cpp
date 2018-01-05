@@ -87,24 +87,24 @@ namespace dof
 
 	void Balancer::Run(Config & config)
 	{
+		Network::Initialize();
+
 		LoadConfig(config);
-
-		//RemoveNode(GetNode("test node 1"));
-		RemoveService(GetService("test 1"));
-
-		int foo = 2;
-
-		// ...
+		
+		for (auto it = m_Services.Value.begin(); it != m_Services.Value.end(); it++)
+		{
+			(*it)->Start();
+		}
 	}
 
 	void Balancer::Stop()
 	{
-
+		m_StopSemaphore.Notify();
 	}
 
 	void Balancer::Finish()
 	{
-
+		m_StopSemaphore.Wait();
 	}
 
 	bool Balancer::AddService(Service & service)
@@ -130,7 +130,7 @@ namespace dof
 			return false;
 		}
 
-		auto it3 = m_ServicesPortProto.Value.find({ service.GetPeerPort(), service.GetProtocol() });
+		auto it3 = m_ServicesPortProto.Value.find({ service.GetPort(), service.GetProtocol() });
 		if (it3 != m_ServicesPortProto.Value.end())
 		{
 			return false;
@@ -138,7 +138,7 @@ namespace dof
 
 		m_Services.Value.insert(&service);
 		m_ServicesName.Value.insert({ service.GetName(), &service });
-		m_ServicesPortProto.Value.insert({ { service.GetPeerPort(), service.GetProtocol() }, &service });
+		m_ServicesPortProto.Value.insert({ { service.GetPort(), service.GetProtocol() }, &service });
 
 		return true;
 	}
@@ -159,7 +159,7 @@ namespace dof
 
 		m_Services.Value.erase(pService);
 		m_ServicesName.Value.erase(service.GetName());
-		m_ServicesPortProto.Value.erase({ service.GetPeerPort(), service.GetProtocol() });
+		m_ServicesPortProto.Value.erase({ service.GetPort(), service.GetProtocol() });
 
 		delete pService;
 
@@ -213,7 +213,7 @@ namespace dof
 			return false;
 		}
 
-		auto it3 = m_NodesAddressPortProto.Value.find({ node.GetAddress(), node.GetPort(), node.GetProtocol() });
+		auto it3 = m_NodesAddressPortProto.Value.find({ node.GetHost().AsString(), node.GetPort(), node.GetProtocol() });
 		if (it3 != m_NodesAddressPortProto.Value.end())
 		{
 			return false;
@@ -221,7 +221,7 @@ namespace dof
 
 		m_Nodes.Value.insert(&node);
 		m_NodesName.Value.insert({ node.GetName(), &node });
-		m_NodesAddressPortProto.Value.insert({ { node.GetAddress(), node.GetPort(), node.GetProtocol() }, &node });
+		m_NodesAddressPortProto.Value.insert({ { node.GetHost().AsString(), node.GetPort(), node.GetProtocol() }, &node });
 
 		service.Associate(node);
 
@@ -252,7 +252,7 @@ namespace dof
 		Node * pNode = &node;
 		m_Nodes.Value.erase(pNode);
 		m_NodesName.Value.erase(node.GetName());
-		m_NodesAddressPortProto.Value.erase({ node.GetAddress(), node.GetPort(), node.GetProtocol() });
+		m_NodesAddressPortProto.Value.erase({ node.GetHost().AsString(), node.GetPort(), node.GetProtocol() });
 
 		delete pNode;
 
@@ -319,8 +319,9 @@ namespace dof
 		const std::string default_name = GetNextServiceName();
 		std::string name				= service["name"].Value<std::string>();
 		std::string protocol_str		= service["protocol"].Value<std::string>("");
-		unsigned short peer_port		= service["peer_port"].Value<unsigned short>(0);
-		unsigned short monitor_port		= service["node_monitor"].Value<unsigned short>(0);
+		Network::Address host			= service["host"].Value<Network::Address>(Network::Address::EmptyIpv4);
+		unsigned short port				= service["port"].Value<unsigned short>(0);
+		Yaml::Node & monitor			= service["monitor"];
 		unsigned int max_connections	= service["max_connections"].Value<unsigned short>(256);
 		std::string session				= service["session"].Value<std::string>("15m");
 
@@ -340,10 +341,31 @@ namespace dof
 				throw Exception(Exception::ValidationError, "Config - Invalid protocol of service no. " + std::to_string(index) + ": " + protocol_str);
 			}
 		}
-		if (peer_port == 0)
+		if (host.GetType() == Network::Address::Invalid)
 		{
-			throw Exception(Exception::ValidationError, "Config - Peer port of service no. " + std::to_string(index) + " is missing or 0.");
+			throw Exception(Exception::ValidationError, "Config - Invalid host address of service no. " + std::to_string(index) + ".");
 		}
+		if (port == 0)
+		{
+			throw Exception(Exception::ValidationError, "Config - Port of service no. " + std::to_string(index) + " is missing or 0.");
+		}
+		
+		///< MONITOR NOT YET IMPLEMENTED!
+			bool invalidMonitor = false;
+			if (monitor.IsMapping())
+			{
+
+			}
+			else
+			{
+			
+			}
+			if (invalidMonitor)
+			{
+				throw Exception(Exception::ValidationError, "Config - Invalid montior of service no. " + std::to_string(index) + ".");
+			}
+		///< MONITOR NOT YET IMPLEMENTED!
+
 
 		std::transform(session.begin(), session.end(), session.begin(), ::tolower);
 		unsigned session_seconds = 0;
@@ -357,7 +379,7 @@ namespace dof
 		}
 
 		// Create and add service.
-		Service * pService = new Service(*this, name, protocol, peer_port, monitor_port, session_seconds, max_connections);
+		Service * pService = new Service(*this, name, protocol, host, port, 0, session_seconds, max_connections);
 		AddService(*pService);
 
 		// Go through service nodes
@@ -382,7 +404,7 @@ namespace dof
 		const std::string default_name = GetNextNodeName();
 		std::string name =			node["name"].Value<std::string>();
 		std::string protocol_str =  node["protocol"].Value<std::string>("");
-		std::string ip =			node["ip"].Value<std::string>("");
+		Network::Address host =		node["host"].Value<Network::Address>(Network::Address::EmptyIpv4);
 		unsigned short port =		node["port"].Value<unsigned short>(0);
 
 		if (name.size() == 0)
@@ -401,19 +423,19 @@ namespace dof
 				throw Exception(Exception::ValidationError, "Config - Invalid protocol of service no." + std::to_string(index) + ": " + protocol_str);
 			}
 		}
-		if (ip.size() == 0)
+		if (host.GetType() == Network::Address::Invalid)
 		{
-			throw Exception(Exception::ValidationError, "Config - Ip of node no. " + std::to_string(index) +
-										" (service no. " + std::to_string(service_index) + ") is missing.");
+			throw Exception(Exception::ValidationError, "Config - Invalid host address of node no. " + std::to_string(index) +
+														" (service no. " + std::to_string(service_index) + ") is missing or 0.");
 		}
 		if (port == 0)
 		{
 			throw Exception(Exception::ValidationError, "Config - Port of node no. " + std::to_string(index) +
-										" (service no. " + std::to_string(service_index) + ") is missing or 0.");
+														" (service no. " + std::to_string(service_index) + ") is missing or 0.");
 		}
 
 		// Create node
-		Node * pNode = new Node(*this, name, protocol, ip, port);
+		Node * pNode = new Node(*this, name, protocol, host, port);
 		if (AddNode(*pNode, service) == false)
 		{
 			throw Exception(Exception::ValidationError, "Config - Duplicate of node, for service no. " + std::to_string(index) + ".");
@@ -478,6 +500,7 @@ namespace dof
 	}
 
 
+
 	// Static implementaitons
 	bool GetProtocolFromString(std::string & string, Network::Protocol::eType & protocol)
 	{
@@ -486,6 +509,11 @@ namespace dof
 		if (string == "tcp")
 		{
 			protocol = Network::Protocol::Tcp;
+			return true;
+		}
+		else if (string == "udp")
+		{
+			protocol = Network::Protocol::Udp;
 			return true;
 		}
 

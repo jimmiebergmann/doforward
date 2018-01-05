@@ -25,22 +25,33 @@
 
 #pragma once
 
+#include <mutex>
+#include <condition_variable>
+#include <chrono>
+
 namespace dof
 {
 
-	namespace Network
+	class Semaphore
 	{
 
-		class TcpListener
-		{
+	public:
 
-		public:
+		Semaphore();
 
-			TcpListener();
+		void Notify();
 
+		void Wait();
 
-		};
+		bool TryWait();
 
-	}
+		bool WaitFor(const unsigned int p_Milliseconds);
+
+	private:
+
+		std::mutex m_Mutex;
+		std::condition_variable m_Condition;
+		unsigned long m_Count;
+	};
 
 }

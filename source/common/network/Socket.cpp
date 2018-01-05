@@ -23,7 +23,7 @@
 *
 */
 
-#pragma once
+#include <Network/Socket.hpp>
 
 namespace dof
 {
@@ -31,15 +31,13 @@ namespace dof
 	namespace Network
 	{
 
-		class TcpListener
+		Socket::Socket()
 		{
+		}
 
-		public:
-
-			TcpListener();
-
-
-		};
+		Socket::~Socket()
+		{
+		}
 
 	}
 

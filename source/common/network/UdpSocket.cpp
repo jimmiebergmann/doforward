@@ -23,7 +23,7 @@
 *
 */
 
-#pragma once
+#include <network/UdpSocket.hpp>
 
 namespace dof
 {
@@ -31,15 +31,13 @@ namespace dof
 	namespace Network
 	{
 
-		class TcpListener
+		UdpSocket::UdpSocket()
 		{
+		}
 
-		public:
-
-			TcpListener();
-
-
-		};
+		UdpSocket::~UdpSocket()
+		{
+		}
 
 	}
 

@@ -35,7 +35,8 @@ namespace dof
 	Service::Service(	Balancer & balancer,
 						const std::string & name,
 						const Network::Protocol::eType protocol,
-						const unsigned short peerPort,
+						const Network::Address & host,
+						const unsigned short port,
 						const unsigned short monitorPort,
 						const unsigned int sessionTimeout,
 						const unsigned int maxConnections,
@@ -43,7 +44,8 @@ namespace dof
 		m_Balancer(balancer),
 		m_Name(name),
 		m_Protocol(protocol),
-		m_PeerPort(peerPort),
+		m_Host(host),
+		m_Port(port),
 		m_MonitorPort(monitorPort),
 		m_SessionTimeout(sessionTimeout),
 		m_MaxConnections(maxConnections)
@@ -70,6 +72,16 @@ namespace dof
 		}
 	}
 
+	void Service::Start()
+	{
+
+	}
+
+	void Service::Stop()
+	{
+
+	}
+
 	Balancer & Service::GetBalancer() const
 	{
 		return m_Balancer;
@@ -85,9 +97,14 @@ namespace dof
 		return m_Protocol;
 	}
 
-	unsigned short Service::GetPeerPort() const
+	const Network::Address & Service::GetHost() const
 	{
-		return m_PeerPort;
+		return m_Host;
+	}
+
+	unsigned short Service::GetPort() const
+	{
+		return m_Port;
 	}
 
 	unsigned short Service::GetMonitorPort() const

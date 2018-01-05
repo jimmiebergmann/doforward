@@ -25,11 +25,15 @@
 
 #pragma once
 
+#include <network/Address.hpp>
+
 namespace dof
 {
 	
 	namespace Network
 	{
+
+		void Initialize();
 
 		namespace Protocol
 		{
@@ -41,8 +45,8 @@ namespace dof
 			enum eType
 			{
 				Tcp,
-				/*Udp,
-				Http,
+				Udp,
+				/*Http,
 				Https*/
 			};
 

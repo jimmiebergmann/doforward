@@ -29,7 +29,7 @@
 
 int main()
 {
-	dof::Balancer b;
+	//dof::Balancer b;
 	
 
 	

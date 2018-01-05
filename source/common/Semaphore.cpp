@@ -23,24 +23,59 @@
 *
 */
 
-#pragma once
+#include <Semaphore.hpp>
 
 namespace dof
 {
 
-	namespace Network
+	Semaphore::Semaphore() :
+		m_Count(0)
 	{
 
-		class TcpListener
+	}
+
+	void Semaphore::Notify()
+	{
+		std::unique_lock<decltype(m_Mutex)> lock(m_Mutex);
+		++m_Count;
+		m_Condition.notify_one();
+	}
+
+	void Semaphore::Wait()
+	{
+		std::unique_lock<decltype(m_Mutex)> lock(m_Mutex);
+		while (!m_Count)
 		{
+			m_Condition.wait(lock);
+		}
+		--m_Count;
+	}
 
-		public:
+	bool Semaphore::TryWait()
+	{
+		std::unique_lock<decltype(m_Mutex)> lock(m_Mutex);
+		if (m_Count)
+		{
+			--m_Count;
+			return true;
+		}
 
-			TcpListener();
+		return false;
+	}
 
+	bool Semaphore::WaitFor(const unsigned int p_Milliseconds)
+	{
+		std::unique_lock<decltype(m_Mutex)> lock(m_Mutex);
+		if (!m_Count)
+		{
+			if (m_Condition.wait_for(lock, std::chrono::milliseconds(p_Milliseconds)) == std::cv_status::no_timeout)
+			{
+				--m_Count;
+				return true;
+			}
+		}
 
-		};
-
+		return false;
 	}
 
 }

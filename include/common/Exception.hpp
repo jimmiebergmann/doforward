@@ -49,9 +49,11 @@ namespace dof
 		{
 			InvalidType,
 			InvalidPointer,
+			InvalidInput,
 			CannotOpen,
 			ValidationError,
-			Yaml
+			Yaml,
+			Network
 		};
 
 		/**

@@ -34,13 +34,13 @@ namespace dof
 	Node::Node(	Balancer & balancer,
 				const std::string & name,
 				const Network::Protocol::eType protocol,
-				const std::string & address,
+				const Network::Address & host,
 				unsigned short port) :
 		m_Balancer(balancer),
 		m_pService(nullptr),
 		m_Name(name),
 		m_Protocol(protocol),
-		m_Address(address),
+		m_Host(host),
 		m_Port(port)
 	{
 	}
@@ -82,9 +82,9 @@ namespace dof
 		return m_Protocol;
 	}
 
-	const std::string & Node::GetAddress() const
+	const Network::Address & Node::GetHost() const
 	{
-		return m_Address;
+		return m_Host;
 	}
 
 	unsigned short Node::GetPort() const

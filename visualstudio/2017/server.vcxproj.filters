@@ -10,6 +10,9 @@
     <Filter Include="common">
       <UniqueIdentifier>{34d21e1c-bff4-4ea2-a613-c32ee76e832a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="common\network">
+      <UniqueIdentifier>{c8fe4c31-3361-4fd3-8c71-be47c9a94076}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\server\Balancer.cpp">
@@ -27,11 +30,29 @@
     <ClCompile Include="..\..\source\server\Service.cpp">
       <Filter>server</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\common\Socket.cpp">
-      <Filter>common</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\source\common\Yaml.cpp">
       <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\common\Semaphore.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\common\network\Socket.cpp">
+      <Filter>common\network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\common\network\TcpListener.cpp">
+      <Filter>common\network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\common\network\TcpSocket.cpp">
+      <Filter>common\network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\common\network\UdpSocket.cpp">
+      <Filter>common\network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\common\Network.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\common\network\Address.cpp">
+      <Filter>common\network</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -50,14 +71,29 @@
     <ClInclude Include="..\..\include\common\Safe.hpp">
       <Filter>common</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\common\Socket.hpp">
-      <Filter>common</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\common\Yaml.hpp">
       <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\common\Network.hpp">
       <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\common\Semaphore.hpp">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\common\network\Socket.hpp">
+      <Filter>common\network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\common\network\TcpListener.hpp">
+      <Filter>common\network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\common\network\TcpSocket.hpp">
+      <Filter>common\network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\common\network\UdpSocket.hpp">
+      <Filter>common\network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\common\network\Address.hpp">
+      <Filter>common\network</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
