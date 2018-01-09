@@ -24,22 +24,24 @@
 */
 
 #include <Node.hpp>
-#include <Balancer.hpp>
+#include <Server.hpp>
 #include <Exception.hpp>
 
 namespace dof
 {
 
 	// Node class
-	Node::Node(	Balancer & balancer,
+	Node::Node( Server & server,
 				const std::string & name,
-				const Network::Protocol::eType protocol,
+				const Network::Protocol::eTransport transportProtocol,
+				const Network::Protocol::eApplication applicationProtocol,
 				const Network::Address & host,
 				unsigned short port) :
-		m_Balancer(balancer),
+		m_Server(server),
 		m_pService(nullptr),
 		m_Name(name),
-		m_Protocol(protocol),
+		m_TransportProtocol(transportProtocol),
+		m_ApplicationProtocol(applicationProtocol),
 		m_Host(host),
 		m_Port(port)
 	{
@@ -53,23 +55,14 @@ namespace dof
 	{
 	}
 
-	/**
-	* @breif Get reference to balancer.
-	*
-	*/
-	Balancer & Node::GetBalancer() const
+	Server & Node::GetServer() const
 	{
-		return m_Balancer;
+		return m_Server;
 	}
 
-	Service & Node::GetService() const
+	Service * Node::GetService() const
 	{
-		if (m_pService == nullptr)
-		{
-			return const_cast<Service&>(Balancer::InvalidService);
-		}
-
-		return *m_pService;
+		return m_pService;
 	}
 
 	const std::string & Node::GetName() const
@@ -77,9 +70,14 @@ namespace dof
 		return m_Name;
 	}
 
-	Network::Protocol::eType Node::GetProtocol() const
+	Network::Protocol::eTransport Node::GetTransportProtocol() const
 	{
-		return m_Protocol;
+		return m_TransportProtocol;
+	}
+
+	Network::Protocol::eApplication Node::GetApplicationProtocol() const
+	{
+		return m_ApplicationProtocol;
 	}
 
 	const Network::Address & Node::GetHost() const
@@ -90,26 +88,6 @@ namespace dof
 	unsigned short Node::GetPort() const
 	{
 		return m_Port;
-	}
-
-	bool Node::operator == (const Node & node)
-	{
-		if (this == &node)
-		{
-			return true;
-		}
-
-		return false;
-	}
-
-	bool Node::operator != (const Node & node)
-	{
-		if (this != &node)
-		{
-			return true;
-		}
-
-		return false;
 	}
 
 }

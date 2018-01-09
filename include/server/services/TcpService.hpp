@@ -25,27 +25,22 @@
 
 #pragma once
 
-#include <Network.hpp>
-#include <network/Address.hpp>
-#include <string>
+#include <Service.hpp>
 #include <set>
+#include <thread>
 
 namespace dof
 {
-
-	class Server;
-	class Node;
 
 	/**
 	* @breif The service class contains information about a specific service,
 	*		 balanced and routed by the Balancer class.
 	*		 Nodes are associated with services, but not managed or destroyed.
 	*
-	* @see Server
-	* @see Node
+	* @see Service
 	*
 	*/
-	class Service
+	class TcpService : public Service
 	{
 
 	public:
@@ -53,22 +48,31 @@ namespace dof
 		/**
 		* @breif Constructor.
 		*
-		* @param server Reference to server.
+		* @param server				Reference to server.
+		* @param name				Name of service.
+		* @param host				Host address.
+		* @param port				Host port.
+		* @param monitorPort		Monitoring port of nodes.
+		* @param sessionTimeout		Session time in seconds. 0 if sessioning is disabled.
+		* @param maxConnections		Max concurrent connections. Not used if protocol = Udp.
+		*
+		* @throw dof::Exception if node or group pointer is invalid in parameter sets.
 		*
 		*/
-		Service(Server & server);
+		TcpService( Server & server,
+					const std::string & name,
+					const Network::Address & host,
+					const unsigned short port,
+					const unsigned short monitorPort,
+					const unsigned int sessionTimeout,
+					const unsigned int maxConnections
+		);
 
 		/**
 		* @breif Destructor
 		*
 		*/
-		virtual ~Service();
-		
-		/**
-		* @breif Get reference to server.
-		*
-		*/
-		Server & GetServer() const;
+		~TcpService();
 
 		/**
 		* @breif Start service.
@@ -77,61 +81,61 @@ namespace dof
 		* @throw Exception if startup of service fails.
 		*
 		*/
-		virtual void Start() = 0;
+		virtual void Start();
 
 		/**
 		* @breif Stop service.
 		*
 		*/
-		virtual void Stop() = 0;
+		virtual void Stop();
 
 		/**
 		* @breif Get name of service.
 		*
 		*/
-		virtual const std::string & GetName() const = 0;
+		virtual const std::string & GetName() const;
 
 		/**
 		* @breif Get transport layer protocol.
 		*
 		*/
-		virtual Network::Protocol::eTransport GetTransportProtocol() const = 0;
+		virtual Network::Protocol::eTransport GetTransportProtocol() const;
 
 		/**
 		* @breif Get application layer protocol.
 		*
 		*/
-		virtual Network::Protocol::eApplication GetApplicationProtocol() const = 0;
+		virtual Network::Protocol::eApplication GetApplicationProtocol() const;
 
 		/**
 		* @breif Get host address.
 		*
 		*/
-		virtual const Network::Address & GetHost() const = 0;
+		virtual const Network::Address & GetHost() const;
 
 		/**
 		* @breif Get host port.
 		*
 		*/
-		virtual unsigned short GetPort() const = 0;
+		virtual unsigned short GetPort() const;
 
 		/**
 		* @breif Get communication port of nodes.
 		*
 		*/
-		virtual unsigned short GetMonitorPort() const = 0;
+		virtual unsigned short GetMonitorPort() const;
 
 		/**
 		* @breif Session timeout. 0 if sessioning is disabled.
 		*
 		*/
-		virtual unsigned short GetSessionTimeout() const = 0;
+		virtual unsigned short GetSessionTimeout() const;
 
 		/**
 		* @breif Get number of max concurrent connections.
 		*
 		*/
-		virtual unsigned short GetMaxConnections() const = 0;
+		virtual unsigned short GetMaxConnections() const;
 
 		/**
 		* @breif Associate node with service.
@@ -139,7 +143,7 @@ namespace dof
 		* @param node Node to associate.
 		*
 		*/
-		virtual void Associate(Node * node) = 0;
+		virtual void Associate(Node * node);
 
 		/**
 		* @breif Detatch node from service.
@@ -147,7 +151,7 @@ namespace dof
 		* @param node Node to detatch.
 		*
 		*/
-		virtual void Detatch(Node * node) = 0;
+		virtual void Detatch(Node * node);
 
 		/**
 		* @breif Get set of associated nodes.
@@ -155,11 +159,23 @@ namespace dof
 		* @param node Output set of nodes associated with service.
 		*
 		*/
-		virtual void GetNodes(std::set<Node *> & nodes) = 0;
-		
+		virtual void GetNodes(std::set<Node *> & nodes);
+
+
 	private:
 
-		Server &	m_Server;	///< Reference to server.
+		/**
+		* @breif Copy constructor.
+		*
+		*/
+		TcpService(const TcpService & service);
+
+		std::string					m_Name;				///< Name of service.
+		Network::Address			m_Host;				///< Host address.
+		unsigned short				m_Port;				///< Host port.
+		unsigned short				m_MonitorPort;		///< Monitoring port of nodes.
+		unsigned int				m_MaxConnections;	///< Max concurrent connections.
+		unsigned int				m_SessionTimeout;	///< Session timeout in seconds.
 
 	};
 

@@ -24,12 +24,12 @@
 */
 
 
-#include <Balancer.hpp>
+#include <Server.hpp>
 #include <iostream>
 
 int main()
 {
-	//dof::Balancer b;
+	//dof::Server b;
 	
 
 	

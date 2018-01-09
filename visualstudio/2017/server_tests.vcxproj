@@ -153,8 +153,8 @@
     <ClCompile Include="..\..\source\common\network\UdpSocket.cpp" />
     <ClCompile Include="..\..\source\common\Semaphore.cpp" />
     <ClCompile Include="..\..\source\common\Yaml.cpp" />
-    <ClCompile Include="..\..\source\server\Balancer.cpp" />
     <ClCompile Include="..\..\source\server\Node.cpp" />
+    <ClCompile Include="..\..\source\server\Server.cpp" />
     <ClCompile Include="..\..\source\server\Service.cpp" />
     <ClCompile Include="..\..\test\server\ServerTests.cpp" />
   </ItemGroup>
@@ -169,8 +169,8 @@
     <ClInclude Include="..\..\include\common\Safe.hpp" />
     <ClInclude Include="..\..\include\common\Semaphore.hpp" />
     <ClInclude Include="..\..\include\common\Yaml.hpp" />
-    <ClInclude Include="..\..\include\server\Balancer.hpp" />
     <ClInclude Include="..\..\include\server\Node.hpp" />
+    <ClInclude Include="..\..\include\server\Server.hpp" />
     <ClInclude Include="..\..\include\server\Service.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

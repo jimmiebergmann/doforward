@@ -155,8 +155,14 @@
     <ClCompile Include="..\..\source\common\Yaml.cpp" />
     <ClCompile Include="..\..\source\mains\ServerApp.cpp" />
     <ClCompile Include="..\..\source\server\Balancer.cpp" />
+    <ClCompile Include="..\..\source\server\balancers\ConnectionCountBalancer.cpp" />
+    <ClCompile Include="..\..\source\server\balancers\RoundRobinBalancer.cpp" />
     <ClCompile Include="..\..\source\server\Node.cpp" />
+    <ClCompile Include="..\..\source\server\Server.cpp" />
     <ClCompile Include="..\..\source\server\Service.cpp" />
+    <ClCompile Include="..\..\source\server\services\TcpService.cpp" />
+    <ClCompile Include="..\..\source\server\services\UdpService.cpp" />
+    <ClCompile Include="..\..\source\server\Session.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\common\Exception.hpp" />
@@ -170,8 +176,14 @@
     <ClInclude Include="..\..\include\common\Semaphore.hpp" />
     <ClInclude Include="..\..\include\common\Yaml.hpp" />
     <ClInclude Include="..\..\include\server\Balancer.hpp" />
+    <ClInclude Include="..\..\include\server\balancers\ConnectionCountBalancer.hpp" />
+    <ClInclude Include="..\..\include\server\balancers\RoundRobinBalancer.hpp" />
     <ClInclude Include="..\..\include\server\Node.hpp" />
+    <ClInclude Include="..\..\include\server\Server.hpp" />
     <ClInclude Include="..\..\include\server\Service.hpp" />
+    <ClInclude Include="..\..\include\server\services\TcpService.hpp" />
+    <ClInclude Include="..\..\include\server\services\UdpService.hpp" />
+    <ClInclude Include="..\..\include\server\Session.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

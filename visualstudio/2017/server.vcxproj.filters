@@ -13,11 +13,14 @@
     <Filter Include="common\network">
       <UniqueIdentifier>{c8fe4c31-3361-4fd3-8c71-be47c9a94076}</UniqueIdentifier>
     </Filter>
+    <Filter Include="server\balancers">
+      <UniqueIdentifier>{c63044fb-f6fb-4edd-9c9d-77ee422ba6ae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="server\services">
+      <UniqueIdentifier>{8dd2bfb1-c19f-428d-82e3-6e97e64d8c2c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\source\server\Balancer.cpp">
-      <Filter>server</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\source\mains\ServerApp.cpp">
       <Filter>mains</Filter>
     </ClCompile>
@@ -54,11 +57,29 @@
     <ClCompile Include="..\..\source\common\network\Address.cpp">
       <Filter>common\network</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\server\Server.cpp">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\server\Balancer.cpp">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\server\services\TcpService.cpp">
+      <Filter>server\services</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\server\services\UdpService.cpp">
+      <Filter>server\services</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\server\balancers\ConnectionCountBalancer.cpp">
+      <Filter>server\balancers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\server\balancers\RoundRobinBalancer.cpp">
+      <Filter>server\balancers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\server\Session.cpp">
+      <Filter>server</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\include\server\Balancer.hpp">
-      <Filter>server</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\common\Exception.hpp">
       <Filter>common</Filter>
     </ClInclude>
@@ -94,6 +115,27 @@
     </ClInclude>
     <ClInclude Include="..\..\include\common\network\Address.hpp">
       <Filter>common\network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\server\Server.hpp">
+      <Filter>server</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\server\Balancer.hpp">
+      <Filter>server</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\server\services\TcpService.hpp">
+      <Filter>server\services</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\server\services\UdpService.hpp">
+      <Filter>server\services</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\server\balancers\ConnectionCountBalancer.hpp">
+      <Filter>server\balancers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\server\balancers\RoundRobinBalancer.hpp">
+      <Filter>server\balancers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\server\Session.hpp">
+      <Filter>server</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -24,7 +24,7 @@
 */
 
 
-#include <Balancer.hpp>
+#include <Server.hpp>
 #include <iostream>
 #include <algorithm>
 
@@ -51,7 +51,7 @@ int main(int argc, char ** argv)
 	}
 
 	// Load balancer configurations.
-	dof::Balancer::Config config;
+	dof::Server::Config config;
 	try
 	{
 		config.LoadFromFile(configPath);
@@ -63,10 +63,10 @@ int main(int argc, char ** argv)
 	}
 
 	// Run balancer with loaded configurations.
-	dof::Balancer balancer;
+	dof::Server server;
 	try
 	{
-		balancer.Run(config);
+		server.Run(config);
 	}
 	catch (const dof::Exception & e)
 	{
@@ -74,6 +74,6 @@ int main(int argc, char ** argv)
 		return 0;
 	}
 
-	balancer.Finish();
+	server.Finish();
 	return 0;
 }

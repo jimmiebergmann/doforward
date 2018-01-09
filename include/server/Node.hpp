@@ -32,7 +32,7 @@
 namespace dof
 {
 
-	class Balancer;
+	class Server;
 	class Service;
 
 	/**
@@ -53,11 +53,12 @@ namespace dof
 		* @param port			Port used for node to connect to server.
 		*
 		*/
-		Node(Balancer & balancer,
-			const std::string & name = "",
-			const Network::Protocol::eType protocol = Network::Protocol::Tcp,
-			const Network::Address & host = 0,
-			unsigned short port = 0);
+		Node(Server & server,
+			const std::string & name,
+			const Network::Protocol::eTransport transportProtocol,
+			const Network::Protocol::eApplication applicationProtocol,
+			const Network::Address & host,
+			unsigned short port);
 
 		/**
 		* @breif Destructor.
@@ -66,18 +67,18 @@ namespace dof
 		~Node();
 
 		/**
-		* @breif Get reference to balancer.
+		* @breif Get reference to server.
 		*
 		*/
-		Balancer & GetBalancer() const;
+		Server & GetServer() const;
 
 		/**
 		* @breif Get associated service.
 		*
-		* @return Reference to service, Balance::InvalidService if node is not yet associated.
+		* @return Pointer to service, nullptr if node is not yet associated.
 		*
 		*/
-		Service & GetService() const;
+		Service * GetService() const;
 
 		/**
 		* @breif Get name of node.
@@ -86,10 +87,16 @@ namespace dof
 		const std::string & GetName() const;
 
 		/**
-		* @breif Get protocol of node.
+		* @breif Get transport layer protocol of node.
 		*
 		*/
-		Network::Protocol::eType GetProtocol() const;
+		Network::Protocol::eTransport GetTransportProtocol() const;
+
+		/**
+		* @breif Get application layer protocol of node.
+		*
+		*/
+		Network::Protocol::eApplication GetApplicationProtocol() const;
 
 		/**
 		* @breif Get host address of node.
@@ -103,13 +110,6 @@ namespace dof
 		*/
 		unsigned short GetPort() const;
 
-		/**
-		* @breif Compare operator between nodes.
-		*
-		*/
-		bool operator == (const Node & node);
-		bool operator != (const Node & node);
-
 	private:
 
 		/**
@@ -118,12 +118,13 @@ namespace dof
 		*/
 		Node(const Node & node);
 
-		Balancer &					m_Balancer;	///< Reference to balancer.
-		Service *					m_pService;	///< Pointer to associated service.
-		std::string					m_Name;		///< Name of node.
-		Network::Protocol::eType	m_Protocol;	///< Communication protocol of node.
-		Network::Address			m_Host;		///< Host adress of node.
-		unsigned short				m_Port;		///< Port used for node to connect to server.
+		Server &						m_Server;				///< Reference to server.
+		Service *						m_pService;				///< Pointer to associated service.
+		std::string						m_Name;					///< Name of node.
+		Network::Protocol::eTransport	m_TransportProtocol;	///< Transport protocol of node.
+		Network::Protocol::eApplication	m_ApplicationProtocol;	///< Application protocol of node.
+		Network::Address				m_Host;					///< Host adress of node.
+		unsigned short					m_Port;					///< Port used for node to connect to server.
 
 
 	};

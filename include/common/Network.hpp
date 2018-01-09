@@ -39,15 +39,26 @@ namespace dof
 		{
 
 			/**
-			* @breif Enumeration of supported communication protocols.
+			* @breif Enumeration of supported transport layer protocols.
 			*
 			*/
-			enum eType
+			enum eTransport
 			{
 				Tcp,
 				Udp,
 				/*Http,
 				Https*/
+			};
+
+			/**
+			* @breif Enumeration of supported application layer protocols.
+			*
+			*/
+			enum eApplication
+			{
+				None,
+				Http,
+				Https
 			};
 
 		}

@@ -189,33 +189,31 @@ namespace dof
 				return false;
 			}
 
-			if (m_Type == Ipv4)
-			{
-				for (size_t i = 0; i < 4; i++)
-				{
-					if (m_Bytes[i] != address.m_Bytes[i])
-					{
-						return false;
-					}
-				}
-
-				return true;
-			}
-
-			for (size_t i = 0; i < 16; i++)
-			{
-				if (m_Bytes[i] != address.m_Bytes[i])
-				{
-					return false;
-				}
-			}
-
-			return true;
+			const size_t dataSize = m_Type == Ipv4 ? 4 : 16;
+			return memcmp(m_Bytes, address.m_Bytes, dataSize) == 0;
 		}
 
 		bool Address::operator != (const Address & address)
 		{
-			return (*this == address) == false;
+			return !(*this == address);
+		}
+
+		bool operator < (const Address & left, const Address & right)
+		{
+			for (size_t i = 0; i < 16; i++)
+			{
+				if (left.m_Bytes[i] < right.m_Bytes[i])
+				{
+					return true;
+				}
+			}
+			
+			return false;
+		}
+
+		bool operator > (const Address & left, const Address & right)
+		{
+			return left < right;
 		}
 
 	}

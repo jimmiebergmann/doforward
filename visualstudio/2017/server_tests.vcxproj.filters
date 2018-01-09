@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\include\server\Balancer.hpp">
-      <Filter>server</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\common\Exception.hpp">
       <Filter>common</Filter>
     </ClInclude>
@@ -54,11 +51,11 @@
     <ClInclude Include="..\..\include\common\network\Address.hpp">
       <Filter>common\network</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\server\Server.hpp">
+      <Filter>server</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\source\server\Balancer.cpp">
-      <Filter>server</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\test\server\ServerTests.cpp">
       <Filter>tests</Filter>
     </ClCompile>
@@ -94,6 +91,9 @@
     </ClCompile>
     <ClCompile Include="..\..\source\common\network\Address.cpp">
       <Filter>common\network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\server\Server.cpp">
+      <Filter>server</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -79,6 +79,8 @@ namespace dof
 
 			bool operator == (const Address & address);
 			bool operator != (const Address & address);
+			friend bool operator < (const Address & left, const Address & right);
+			friend bool operator > (const Address & left, const Address & right);
 
 		private:
 
