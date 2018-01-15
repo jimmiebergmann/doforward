@@ -82,7 +82,7 @@ namespace dof
 		*/
 		const T Get()
 		{
-			std::lock_guard gm(Mutex);
+			std::lock_guard<std::mutex> gm(Mutex);
 			return Value;
 		}
 
@@ -92,7 +92,7 @@ namespace dof
 		*/
 		void Set(const T & value)
 		{
-			std::lock_guard gm(Mutex);
+			std::lock_guard<std::mutex> gm(Mutex);
 			Value = value;
 		}
 
@@ -102,7 +102,7 @@ namespace dof
 		*/
 		const T & operator () ()
 		{
-			std::lock_guard gm(Mutex);
+			std::lock_guard<std::mutex> gm(Mutex);
 			return Value;
 		}
 
@@ -112,7 +112,7 @@ namespace dof
 		*/
 		Safe & operator = (const T & value)
 		{
-			std::lock_guard gm(Mutex);
+			std::lock_guard<std::mutex> gm(Mutex);
 			Value = value;
 			return *this;
 		}
@@ -123,7 +123,7 @@ namespace dof
 		*/
 		Safe & operator = (const Safe & safe)
 		{
-			std::lock_guard gm(Mutex);
+			std::lock_guard<std::mutex> gm(Mutex);
 			Value = safe.Get();
 			return *this;
 		}

@@ -25,7 +25,7 @@
 
 #include <Network.hpp>
 #include <Exception.hpp>
-#include <WinSock2.h>
+#include <WindowsHeaders.hpp>
 
 namespace dof
 {

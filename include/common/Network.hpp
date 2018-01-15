@@ -33,8 +33,16 @@ namespace dof
 	namespace Network
 	{
 
+		/**
+		* @breif Function for initializing winsock for windows.
+		*
+		*/
 		void Initialize();
 
+		/**
+		* @breif Namespace containing protocol information.
+		*
+		*/
 		namespace Protocol
 		{
 
@@ -46,8 +54,6 @@ namespace dof
 			{
 				Tcp,
 				Udp,
-				/*Http,
-				Https*/
 			};
 
 			/**

@@ -25,22 +25,16 @@
 
 #pragma once
 
-#include <Balancer.hpp>
-#include <Safe.hpp>
-#include <map>
-#include <set>
+#include <Time.hpp>
 
 namespace dof
 {
 
 	/**
-	* @breif Balancer using connection count algorithm.
-	*		 Less connections, first out.
-	*
-	* @see Balancer
+	* @breif Timer class.
 	*
 	*/
-	class ConnectionCountBalancer : public Balancer
+	class Timer
 	{
 
 	public:
@@ -49,65 +43,49 @@ namespace dof
 		* @breif Constructor.
 		*
 		*/
-		ConnectionCountBalancer(Service * service);
+		Timer();
 
 		/**
-		* @breif Destructor.
+		* @breif Start timer.
 		*
 		*/
-		~ConnectionCountBalancer();
+		void Start();
 
 		/**
-		* @breif Get algorithm of balancer.
+		* @breif Stop timer.
 		*
 		*/
-		virtual eAlgorithm GetAlgoritm() const;
+		void Stop();
 
 		/**
-		* @breif Get next suitable node.
+		* @breif Get the time since last stop.
 		*
-		* @param peer Pointer to peer if available, else nullptr.
-		*
-		* @return pointer to next node, nullptr if queue is empty.
+		* @return The current time of the timer.
 		*
 		*/
-		virtual Node * GetNext(Peer * peer = nullptr);
+		Time GetTime();
 
 		/**
-		* @breif Associate node with balancer.
+		* @breif Stop and get time.
 		*
-		* @throw Exception if node is nullptr.
+		* @see Stop
+		* @see GetTime
+		*
+		* @return The current time of the timer.
 		*
 		*/
-		virtual void Associate(Node * node);
+		Time GetLapsedTime();
 
 		/**
-		* @breif Detatch node from balancer.
-		*
-		* @throw Exception if node is nullptr.
+		* @breif Get system time in microseconds since last startup.
 		*
 		*/
-		virtual void Detatch(Node * node);
-
-		/**
-		* @breif Detatch all nodes from balancer.
-		*
-		*/
-		virtual void DetatchAll();
-
-		/**
-		* @breif Copy nodes to given balancer.
-		*
-		* @throw Exception if balancer is nullptr.
-		*
-		*/
-		virtual size_t Copy(Balancer * balancer);
+		static unsigned long long GetSystemTime();
 
 	private:
 
-		Safe<std::map<unsigned int, Node *>>	m_NodeMap;	///< Map of nodes.
-		Safe<std::set<Node *>>					m_NodeSet;	///< Set of all nodes.
+		unsigned long long m_StartTime;		///< The start time
+		unsigned long long m_Time;			///< The the current time.
 
 	};
-
 }

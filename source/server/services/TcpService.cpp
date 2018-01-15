@@ -24,68 +24,201 @@
 */
 
 #include <services/TcpService.hpp>
+#include <network/TcpSocket.hpp>
+#include <peers/TcpPeer.hpp>
+#include <balancers/ConnectionCountBalancer.hpp>
+#include <balancers/RoundRobinBalancer.hpp>
+#include <Exception.hpp>
+#include <iostream>
 
 namespace dof
 {
 
 	// Service class
-	TcpService::TcpService(	Server & server,
-							const std::string & name,
-							const Network::Address & host,
-							const unsigned short port,
-							const unsigned short monitorPort,
-							const unsigned int sessionTimeout,
-							const unsigned int maxConnections) :
-		Service(server),
-		m_Name(name),
-		m_Host(host),
-		m_Port(port),
-		m_MonitorPort(monitorPort),
-		m_SessionTimeout(sessionTimeout),
-		m_MaxConnections(maxConnections)
+	TcpService::TcpService(	Server & server, const Config & config) :
+		Service(server, config),
+		m_Started(false),
+		m_pThread(nullptr),
+		m_pBalancer(nullptr),
+		m_pMemoryPool(nullptr)
 	{
-		/*
-		Node * pNode = nullptr;
-		for (auto it = nodes.begin(); it != nodes.end(); it++)
+		// Create balancer.
+		if (config.BalancerAlgorithm == Balancer::RoundRobin)
 		{
-			pNode = *it;
-			if (pNode == nullptr)
-			{
-				throw Exception(Exception::InvalidPointer, "Invalid node pointer.");
-			}
-
-			Associate(*pNode);
+			m_pBalancer = new RoundRobinBalancer(this);
 		}
-		*/
+		else if (config.BalancerAlgorithm == Balancer::ConnectionCount)
+		{
+			m_pBalancer = new ConnectionCountBalancer(this);
+		}
+		else
+		{
+			throw new Exception(Exception::InvalidInput, "Unknown balancing algoritm.");
+		}
+
+		// Create memory pool
+		m_pMemoryPool = new MemoryPool<char>(
+			m_Config.BufferInfo.Size,
+			m_Config.BufferInfo.PoolCount,
+			m_Config.BufferInfo.PoolMaxCount,
+			m_Config.BufferInfo.PoolReserveCount,
+			m_Config.BufferInfo.PoolAllocationCount);
 	};
 
 
 	TcpService::~TcpService()
 	{
-		/*
-		SafeGuard sf(m_Nodes);
-		for (auto it = m_Nodes.Value.begin(); it != m_Nodes.Value.end(); it++)
-		{
-			m_Server.RemoveNode(*(*it), true);
-		}
-		*/
+		Stop();
+		delete m_pBalancer;
+		delete m_pMemoryPool;
 	}
 
 	void TcpService::Start()
 	{
+		// Start to listen.
+		m_ListenSocket.Listen(m_Config.Port);
 
+		m_Started = true;
+		m_pThread = new std::thread([this]()
+		{
+			fd_set		socketSet;
+			int			maxFD = 0;
+			int			currentFD = 0;
+			const int	listenSocket = static_cast<int>(m_ListenSocket.GetHandle());
+			int			newSocket = 0;
+			struct timeval timeout = { 1, 0 };
+
+			while (m_Started.Get())
+			{
+				/// SHOULD BE OPTIMIZED AND NOT CALCULATED EVERY LOOP?
+
+				// Create set of this loop
+				FD_ZERO(&socketSet);
+				FD_SET(listenSocket, &socketSet);
+				maxFD = listenSocket;
+				for (auto it = m_Peers.begin(); it != m_Peers.end(); it++)
+				{
+					currentFD = static_cast<int>(it->first);
+					FD_SET(currentFD, &socketSet);
+					if (currentFD > maxFD)
+					{
+						maxFD = currentFD;
+					}
+				}
+
+				// Select from socket set.
+				int activity = select(maxFD + 1, &socketSet, NULL, NULL, &timeout);
+				if (activity == 0) // Timeout.
+				{
+					
+					continue;
+				}
+				if (activity < 0) // Error.
+				{
+					throw new Exception(Exception::Network, "Failed to select socket. Error no. " + std::to_string(GetLastError()));
+				}
+
+				// Check for new connection.
+				if (FD_ISSET(listenSocket, &socketSet))
+				{
+					if ((newSocket = accept(listenSocket, NULL, NULL)) < 0)
+					{
+						throw new Exception(Exception::Network, "Failed to accept socket. Error no. " + std::to_string(GetLastError()));
+					}					
+				}
+
+				// Check activity on connections.
+				for (auto it = m_Peers.begin(); it != m_Peers.end();)
+				{
+					// Check if we got any activity on current peer.
+					currentFD = static_cast<int>(it->first);
+					if (!FD_ISSET(currentFD, &socketSet))
+					{
+						++it;
+						continue;
+					}
+
+					TcpPeer * pPeer = it->second;
+
+					// Pool pool node.
+					MemoryPool<char>::Node * pNode = m_pMemoryPool->Poll(Seconds(1.0f));
+					if (pNode == nullptr)
+					{
+						std::cout << "Memory pool timeout." << std::endl;
+						continue;
+					}
+
+					// Receive data.
+					int valRead = 0;
+					if ((valRead = recv(currentFD, pNode->Get(), pNode->Size(), 0)) == 0)
+					{
+						// Disconnection
+						std::cout << "Peer disconnected." << std::endl;
+
+						// Erase peer and nove to next iterator.
+						it = m_Peers.erase(it);
+						delete pPeer;
+						continue;
+					}
+
+					// Error
+					if (valRead < 0)
+					{
+						throw new Exception(Exception::Network, "Failed to recv on socket. Error no. " + std::to_string(GetLastError()));
+					}
+
+					// Print received data.
+					pNode->Get()[valRead] = 0;
+					std::cout << "Recv data: " << pNode->Get() << std::endl;
+
+					m_pMemoryPool->Return(pNode);
+
+					// Move to next iterator.
+					++it;
+				}
+
+				// Add connection socket and create peer.
+				if (newSocket != 0)
+				{
+					const Network::Socket::Handle socketHandle = static_cast<Network::Socket::Handle>(newSocket);
+					newSocket = 0;
+					
+					// Select node from balancer.
+					Node * pNode = m_pBalancer->GetNext();
+
+					// Create and add peer.
+					Network::TcpSocket * pNewSocket = new Network::TcpSocket(socketHandle, Network::TcpSocket::Peer);
+					TcpPeer * pNewPeer = new TcpPeer(pNewSocket, pNode, nullptr);
+					m_Peers.insert({ socketHandle, pNewPeer });
+					
+					std::cout << "Peer connected." << std::endl;
+				}
+
+			}
+
+		});
 	}
 
 	void TcpService::Stop()
 	{
+		m_Started = false;
 
+		if (m_pThread)
+		{
+			m_pThread->join();
+			delete m_pThread;
+			m_pThread = nullptr;
+		}
+
+		m_ListenSocket.Close();
+
+		for (auto it = m_Peers.begin(); it != m_Peers.end();)
+		{
+			TcpPeer * pPeer = it->second;
+			delete pPeer;
+		}
 	}
 	
-	const std::string & TcpService::GetName() const
-	{
-		return m_Name;
-	}
-
 	Network::Protocol::eTransport TcpService::GetTransportProtocol() const
 	{
 		return Network::Protocol::Tcp;
@@ -96,59 +229,19 @@ namespace dof
 		return Network::Protocol::None;
 	}
 
-	const Network::Address & TcpService::GetHost() const
-	{
-		return m_Host;
-	}
-
-	unsigned short TcpService::GetPort() const
-	{
-		return m_Port;
-	}
-
-	unsigned short TcpService::GetMonitorPort() const
-	{
-		return m_MonitorPort;
-	}
-
-	unsigned short TcpService::GetSessionTimeout() const
-	{
-		return m_SessionTimeout;
-	}
-
-	unsigned short TcpService::GetMaxConnections() const
-	{
-		return m_MaxConnections;
-	}
-
 	void TcpService::Associate(Node * node)
 	{
-		/*if (node.m_pService != nullptr)
-		{
-			return;
-		}
-		node.m_pService = this;
-
-		SafeGuard sf(m_Nodes);
-		m_Nodes.Value.insert(&node);*/
+		m_pBalancer->Associate(node);
 	}
 
 	void TcpService::Detatch(Node * node)
 	{
-		/*SafeGuard sf(m_Nodes);
-		auto it = m_Nodes.Value.find(&node);
-		if (it == m_Nodes.Value.end())
-		{
-			return;
-		}
-
-		node.m_pService = nullptr;
-		m_Nodes.Value.erase(&node);*/
+		m_pBalancer->Detatch(node);
 	}
 
 	void TcpService::GetNodes(std::set<Node *> & nodes)
 	{
-
+		throw new Exception(Exception::InvalidInput, "Function not yet implemented: TcpService::GetNodes");
 	}
 
 }

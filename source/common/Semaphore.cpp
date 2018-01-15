@@ -34,11 +34,18 @@ namespace dof
 
 	}
 
-	void Semaphore::Notify()
+	void Semaphore::NotifyOne()
 	{
 		std::unique_lock<decltype(m_Mutex)> lock(m_Mutex);
 		++m_Count;
 		m_Condition.notify_one();
+	}
+
+	void Semaphore::NotifyAll()
+	{
+		std::unique_lock<decltype(m_Mutex)> lock(m_Mutex);
+		m_Count = 0;
+		m_Condition.notify_all();
 	}
 
 	void Semaphore::Wait()
@@ -63,12 +70,12 @@ namespace dof
 		return false;
 	}
 
-	bool Semaphore::WaitFor(const unsigned int p_Milliseconds)
+	bool Semaphore::WaitFor(const Time & timeout)
 	{
 		std::unique_lock<decltype(m_Mutex)> lock(m_Mutex);
 		if (!m_Count)
 		{
-			if (m_Condition.wait_for(lock, std::chrono::milliseconds(p_Milliseconds)) == std::cv_status::no_timeout)
+			if (m_Condition.wait_for(lock, std::chrono::microseconds(timeout.AsMicroseconds())) == std::cv_status::no_timeout)
 			{
 				--m_Count;
 				return true;

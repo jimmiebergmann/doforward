@@ -23,79 +23,36 @@
 *
 */
 
-#include <Service.hpp>
+#include <peers/TcpPeer.hpp>
+#include <network/TcpSocket.hpp>
+#include <Node.hpp>
 
 namespace dof
 {
 
-	// Service config struct
-	Service::Config::Config() :
-		Name(""),
-		Host(0),
-		Port(0),
-		BufferInfo(),
-		BalancerAlgorithm(Balancer::RoundRobin),
-		SessionTimeout(Microseconds(0)),
-		MaxConnections(1024)
+	TcpPeer::TcpPeer(Network::TcpSocket * socket, Node * node, Session * session) :
+		Peer(node, session),
+		m_pSocket(socket)
 	{
-
+		//node->
 	}
 
-	Service::Config::Buffer::Buffer() :
-		Size(8192),
-		PoolCount(10),
-		PoolMaxCount(10),
-		PoolReserveCount(1),
-		PoolAllocationCount(3)
+	TcpPeer::~TcpPeer()
 	{
-
+		if (m_pSocket)
+		{
+			delete m_pSocket;
+		}
 	}
 
-	// Service class
-	Service::Service(Server & server,
-					 const Config & config) :
-		m_Server(server),
-		m_Config(config)
+	Network::TcpSocket * TcpPeer::GetSocket() const
 	{
-	};
-
-	Service::~Service()
-	{
+		return m_pSocket;
 	}
 
-	Server & Service::GetServer() const
+	Network::Protocol::eTransport TcpPeer::GetType() const
 	{
-		return m_Server;
-	}
-
-	const Service::Config & Service::GetConfig() const
-	{
-		return m_Config;
-	}
-
-	const std::string & Service::GetName() const
-	{
-		return m_Config.Name;
-	}
-
-	const Network::Address & Service::GetHost() const
-	{
-		return m_Config.Host;
-	}
-
-	unsigned short Service::GetPort() const
-	{
-		return m_Config.Port;
-	}
-
-	const Time & Service::GetSessionTimeout() const
-	{
-		return m_Config.SessionTimeout;
-	}
-
-	unsigned short Service::GetMaxConnections() const
-	{
-		return m_Config.MaxConnections;
-	}
+		return Network::Protocol::Tcp;
+	} 
 
 }

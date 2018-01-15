@@ -31,12 +31,18 @@ namespace dof
 	namespace Network
 	{
 
-		Socket::Socket()
+		Socket::Socket() :
+			m_Handle(0)
 		{
 		}
 
 		Socket::~Socket()
 		{
+		}
+
+		const Socket::Handle & Socket::GetHandle() const
+		{
+			return m_Handle;
 		}
 
 	}

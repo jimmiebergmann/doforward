@@ -152,12 +152,17 @@
     <ClCompile Include="..\..\source\common\network\TcpSocket.cpp" />
     <ClCompile Include="..\..\source\common\network\UdpSocket.cpp" />
     <ClCompile Include="..\..\source\common\Semaphore.cpp" />
+    <ClCompile Include="..\..\source\common\Time.cpp" />
+    <ClCompile Include="..\..\source\common\Timer.cpp" />
     <ClCompile Include="..\..\source\common\Yaml.cpp" />
     <ClCompile Include="..\..\source\mains\ServerApp.cpp" />
     <ClCompile Include="..\..\source\server\Balancer.cpp" />
     <ClCompile Include="..\..\source\server\balancers\ConnectionCountBalancer.cpp" />
     <ClCompile Include="..\..\source\server\balancers\RoundRobinBalancer.cpp" />
     <ClCompile Include="..\..\source\server\Node.cpp" />
+    <ClCompile Include="..\..\source\server\Peer.cpp" />
+    <ClCompile Include="..\..\source\server\peers\TcpPeer.cpp" />
+    <ClCompile Include="..\..\source\server\peers\UdpPeer.cpp" />
     <ClCompile Include="..\..\source\server\Server.cpp" />
     <ClCompile Include="..\..\source\server\Service.cpp" />
     <ClCompile Include="..\..\source\server\services\TcpService.cpp" />
@@ -166,6 +171,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\common\Exception.hpp" />
+    <ClInclude Include="..\..\include\common\MemoryPool.hpp" />
     <ClInclude Include="..\..\include\common\Network.hpp" />
     <ClInclude Include="..\..\include\common\network\Address.hpp" />
     <ClInclude Include="..\..\include\common\network\Socket.hpp" />
@@ -174,11 +180,17 @@
     <ClInclude Include="..\..\include\common\network\UdpSocket.hpp" />
     <ClInclude Include="..\..\include\common\Safe.hpp" />
     <ClInclude Include="..\..\include\common\Semaphore.hpp" />
+    <ClInclude Include="..\..\include\common\Time.hpp" />
+    <ClInclude Include="..\..\include\common\Timer.hpp" />
+    <ClInclude Include="..\..\include\common\WindowsHeaders.hpp" />
     <ClInclude Include="..\..\include\common\Yaml.hpp" />
     <ClInclude Include="..\..\include\server\Balancer.hpp" />
     <ClInclude Include="..\..\include\server\balancers\ConnectionCountBalancer.hpp" />
     <ClInclude Include="..\..\include\server\balancers\RoundRobinBalancer.hpp" />
     <ClInclude Include="..\..\include\server\Node.hpp" />
+    <ClInclude Include="..\..\include\server\Peer.hpp" />
+    <ClInclude Include="..\..\include\server\peers\TcpPeer.hpp" />
+    <ClInclude Include="..\..\include\server\peers\UdpPeer.hpp" />
     <ClInclude Include="..\..\include\server\Server.hpp" />
     <ClInclude Include="..\..\include\server\Service.hpp" />
     <ClInclude Include="..\..\include\server\services\TcpService.hpp" />

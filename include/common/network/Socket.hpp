@@ -23,7 +23,10 @@
 *
 */
 
-#pragma once
+#pragma 
+
+#include <Network.hpp>
+#include <WindowsHeaders.hpp>
 
 namespace dof
 {
@@ -31,14 +34,51 @@ namespace dof
 	namespace Network
 	{
 
+		/**
+		* @breif Base class for sockets.
+		*
+		* @see TcpSocket
+		* @see UdpSocket
+		*
+		*/
 		class Socket
 		{
 
 		public:
 
+			/**
+			* @breif Socket handle type.
+			*
+			*/
+			typedef SOCKET Handle;
+
+			/**
+			* @breif Constructor.
+			*
+			*/
 			Socket();
 
+			/**
+			* @breif Destructor.
+			*
+			*/
 			virtual ~Socket();
+
+			/**
+			* @breif Get reference to handle.
+			*
+			*/
+			const Handle & GetHandle() const;
+
+			/**
+			* @breif Get bound port.
+			*
+			*/
+			virtual unsigned short GetPort() = 0;
+
+		protected:
+
+			Handle m_Handle; ///< Socket handle.
 
 		};
 

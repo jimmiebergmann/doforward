@@ -26,6 +26,7 @@
 #include <Server.hpp>
 #include <services/TcpService.hpp>
 #include <services/UdpService.hpp>
+#include <Balancer.hpp>
 #include <Exception.hpp>
 #include <Yaml.hpp>
 #include <algorithm>
@@ -34,9 +35,11 @@ namespace dof
 {
 
 	// Static declarations
-	static bool GetProtocolsFromString(std::string & string,
-									   Network::Protocol::eTransport & transportProtocol,
-									   Network::Protocol::eApplication & applicationProtocol);
+	static bool GetProtocolsFromString( std::string & string,
+										Network::Protocol::eTransport & transportProtocol,
+										Network::Protocol::eApplication & applicationProtocol);
+	static bool GetBalancerAlgorithmFromString(	const std::string & string,
+												Balancer::eAlgorithm & algorithm);
 	static bool StringToSeconds(const std::string & string, unsigned int & seconds);
 
 
@@ -100,7 +103,7 @@ namespace dof
 
 	void Server::Stop()
 	{
-		m_StopSemaphore.Notify();
+		m_StopSemaphore.NotifyOne();
 	}
 
 	void Server::Finish()
@@ -324,10 +327,11 @@ namespace dof
 		{
 			m_MaxConnections = conf_server["max_connections"].Value<unsigned short>(1024);
 			m_InterprocessPort = conf_server["com_port"].Value<unsigned short>(240);
+			LoadDefaultServiceConifg(conf_server);
 		}
 		if (conf_services.IsSequence())
 		{
-			for (auto i = 0; i < conf_services.Size(); i++)
+			for (size_t i = 0; i < conf_services.Size(); i++)
 			{
 				Yaml::Node & currentService = conf_services[i];
 				LoadConfigService(currentService, i);
@@ -342,14 +346,17 @@ namespace dof
 	void Server::LoadConfigService(Yaml::Node & service, const unsigned int index)
 	{
 		// Get and validate service data.
-		const std::string default_name = GetNextServiceName();
+		const std::string default_name	= GetNextServiceName();
 		std::string name				= service["name"].Value<std::string>();
 		std::string protocol_str		= service["protocol"].Value<std::string>("");
 		Network::Address host			= service["host"].Value<Network::Address>(Network::Address::EmptyIpv4);
 		unsigned short port				= service["port"].Value<unsigned short>(0);
-		Yaml::Node & monitor			= service["monitor"];
+		std::string balancing			= service["balancing"].Value<std::string>("");
+		/*Yaml::Node & monitor			= service["monitor"];
 		unsigned int max_connections	= service["max_connections"].Value<unsigned short>(256);
-		std::string session				= service["session"].Value<std::string>("15m");
+		std::string session				= service["session"].Value<std::string>("");*/
+
+		Service::Config serviceConfig = m_DefaultServiceConfig;
 
 		if (name.size() == 0)
 		{
@@ -376,7 +383,18 @@ namespace dof
 		{
 			throw Exception(Exception::ValidationError, "Config - Port of service no. " + std::to_string(index) + " is missing or 0.");
 		}
-		
+		Balancer::eAlgorithm balancingAlgorithm = Balancer::RoundRobin;
+		if (GetBalancerAlgorithmFromString(balancing, balancingAlgorithm) == false)
+		{
+			throw Exception(Exception::ValidationError, "Config - Balancing algorithm of service no. " + std::to_string(index) + " is invalid: " + balancing);
+		}
+
+		serviceConfig.Name = name;
+		serviceConfig.Host = host;
+		serviceConfig.Port = port;
+		serviceConfig.BalancerAlgorithm = balancingAlgorithm;
+
+		/*
 		///< MONITOR NOT YET IMPLEMENTED!
 			bool invalidMonitor = false;
 			if (monitor.IsMapping())
@@ -395,8 +413,8 @@ namespace dof
 
 
 		std::transform(session.begin(), session.end(), session.begin(), ::tolower);
-		unsigned session_seconds = 0;
-		if (session == "disabled" || session == "false" || session == "0")
+		unsigned int session_seconds = 0;
+		if (session == "" || session == "disabled" || session == "false")
 		{
 			session_seconds = 0;
 		}
@@ -405,8 +423,10 @@ namespace dof
 			throw Exception(Exception::ValidationError, "Config - Session of service no. " + std::to_string(index) + " is invalid: " + session);
 		}
 
+		*/
+
 		// Create and add service.
-		Service * pService = CreateService(transportProtocol, applicationProtocol, name, host, port, 0, session_seconds, max_connections);
+		Service * pService = CreateService(transportProtocol, applicationProtocol, serviceConfig);
 		if (AddService(pService) == false)
 		{
 			throw Exception(Exception::ValidationError, "Config - Duplicate of service no. " + std::to_string(index) + ".");
@@ -416,7 +436,7 @@ namespace dof
 		Yaml::Node & conf_nodes = service["nodes"];
 		if (conf_nodes.IsSequence())
 		{
-			for (auto i = 0; i < conf_nodes.Size(); i++)
+			for (size_t i = 0; i < conf_nodes.Size(); i++)
 			{
 				Yaml::Node & currentNode = conf_nodes[i];
 				LoadConfigNode(currentNode, pService, i, index);
@@ -472,6 +492,19 @@ namespace dof
 			throw Exception(Exception::ValidationError, "Config - Duplicate of node, for service no. " + std::to_string(index) + ".");
 		}
 
+	}
+
+	void Server::LoadDefaultServiceConifg(Yaml::Node & server)
+	{
+		m_DefaultServiceConfig.BalancerAlgorithm = Balancer::RoundRobin;
+		m_DefaultServiceConfig.SessionTimeout = Time::Zero;
+		m_DefaultServiceConfig.MaxConnections = 1024;
+
+		m_DefaultServiceConfig.BufferInfo.Size = 8192;
+		m_DefaultServiceConfig.BufferInfo.PoolCount = 512;
+		m_DefaultServiceConfig.BufferInfo.PoolReserveCount = 128;
+		m_DefaultServiceConfig.BufferInfo.PoolMaxCount = 2048;
+		m_DefaultServiceConfig.BufferInfo.PoolAllocationCount = 32;
 	}
 
 	std::string Server::GetNextServiceName()
@@ -533,12 +566,7 @@ namespace dof
 
 	Service * Server::CreateService(const Network::Protocol::eTransport transportProtocol,
 									const Network::Protocol::eApplication applicationProtocol,
-									const std::string & name,
-									const Network::Address & host,
-									const unsigned short port,
-									const unsigned short monitorPort,
-									const unsigned int sessionTimeout,
-									const unsigned int maxConnections)
+									const Service::Config & config)
 	{
 		Service * pService = nullptr;
 
@@ -549,7 +577,7 @@ namespace dof
 				switch (applicationProtocol)
 				{
 				case Network::Protocol::None:
-					pService = new TcpService(*this, name, host, port, monitorPort, sessionTimeout, maxConnections);
+					pService = new TcpService(*this, config);
 					break;
 				default:
 					throw Exception(Exception::InvalidInput, "Not yet supported application protocol.");
@@ -573,7 +601,6 @@ namespace dof
 
 		return pService;
 	}
-
 
 
 	// Static implementaitons
@@ -649,6 +676,28 @@ namespace dof
 		else if (unit == "d")
 		{
 			seconds *= 60 * 60 * 24;
+		}
+		else
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	bool GetBalancerAlgorithmFromString(const std::string & string, Balancer::eAlgorithm & algorithm)
+	{
+		std::string algStr = string;
+		algStr.erase(remove_if(algStr.begin(), algStr.end(), ::isspace), algStr.end());
+		std::transform(algStr.begin(), algStr.end(), algStr.begin(), ::tolower);
+
+		if (algStr == "" || algStr == "roundrobin" || algStr == "rr")
+		{
+			algorithm = Balancer::RoundRobin;
+		}
+		else if (algStr == "connectioncount" || algStr == "cc")
+		{
+			algorithm = Balancer::ConnectionCount;
 		}
 		else
 		{

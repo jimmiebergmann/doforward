@@ -23,79 +23,60 @@
 *
 */
 
-#include <Service.hpp>
+#include <Timer.hpp>
+#include <ctime>
+#include <WindowsHeaders.hpp>
+//#include <sys/time.h>
 
 namespace dof
 {
 
-	// Service config struct
-	Service::Config::Config() :
-		Name(""),
-		Host(0),
-		Port(0),
-		BufferInfo(),
-		BalancerAlgorithm(Balancer::RoundRobin),
-		SessionTimeout(Microseconds(0)),
-		MaxConnections(1024)
-	{
-
-	}
-
-	Service::Config::Buffer::Buffer() :
-		Size(8192),
-		PoolCount(10),
-		PoolMaxCount(10),
-		PoolReserveCount(1),
-		PoolAllocationCount(3)
-	{
-
-	}
-
-	// Service class
-	Service::Service(Server & server,
-					 const Config & config) :
-		m_Server(server),
-		m_Config(config)
-	{
-	};
-
-	Service::~Service()
+	Timer::Timer() :
+		m_StartTime( 0 ),
+		m_Time( 0 )
 	{
 	}
 
-	Server & Service::GetServer() const
+	void Timer::Start()
 	{
-		return m_Server;
+		m_StartTime = GetSystemTime();
 	}
 
-	const Service::Config & Service::GetConfig() const
+	void Timer::Stop( )
 	{
-		return m_Config;
+		m_Time = GetSystemTime() - m_StartTime;
 	}
 
-	const std::string & Service::GetName() const
+	Time Timer::GetTime()
 	{
-		return m_Config.Name;
+		return Microseconds(m_Time);
 	}
 
-	const Network::Address & Service::GetHost() const
+	Time Timer::GetLapsedTime()
 	{
-		return m_Config.Host;
+		Stop();
+		return Microseconds(m_Time);
 	}
 
-	unsigned short Service::GetPort() const
+	unsigned long long Timer::GetSystemTime()
 	{
-		return m_Config.Port;
-	}
+		long long counter = 0;
+		long long frequency = 0;
 
-	const Time & Service::GetSessionTimeout() const
-	{
-		return m_Config.SessionTimeout;
-	}
+		QueryPerformanceCounter( (LARGE_INTEGER*)&counter );
+		QueryPerformanceFrequency( (LARGE_INTEGER*)&frequency );
 
-	unsigned short Service::GetMaxConnections() const
-	{
-		return m_Config.MaxConnections;
+		double timeFloat = (static_cast<double>(counter) * 1000000.0f ) / static_cast<double>(frequency);
+		return static_cast<unsigned long long>(timeFloat);
+
+		// Linux implementation.
+		/*
+			timeval Time;
+			gettimeofday( &Time, 0 );
+
+			return	static_cast<long lon>(Time.tv_sec) * 1000000 + static_cast<long lon>(Time.tv_usec);
+		*/
 	}
 
 }
+

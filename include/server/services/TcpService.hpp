@@ -26,11 +26,23 @@
 #pragma once
 
 #include <Service.hpp>
+#include <Safe.hpp>
+#include <MemoryPool.hpp>
+#include <network/TcpSocket.hpp>
+#include <Balancer.hpp>
 #include <set>
+#include <map>
 #include <thread>
 
 namespace dof
 {
+
+	/**
+	* @breif Forward declarations.
+	*
+	*/
+	class TcpPeer;
+	class Balancer;
 
 	/**
 	* @breif The service class contains information about a specific service,
@@ -48,25 +60,11 @@ namespace dof
 		/**
 		* @breif Constructor.
 		*
-		* @param server				Reference to server.
-		* @param name				Name of service.
-		* @param host				Host address.
-		* @param port				Host port.
-		* @param monitorPort		Monitoring port of nodes.
-		* @param sessionTimeout		Session time in seconds. 0 if sessioning is disabled.
-		* @param maxConnections		Max concurrent connections. Not used if protocol = Udp.
-		*
-		* @throw dof::Exception if node or group pointer is invalid in parameter sets.
+		* @param server		Reference to server.
+		* @param config		Reference to service configurations.
 		*
 		*/
-		TcpService( Server & server,
-					const std::string & name,
-					const Network::Address & host,
-					const unsigned short port,
-					const unsigned short monitorPort,
-					const unsigned int sessionTimeout,
-					const unsigned int maxConnections
-		);
+		TcpService( Server & server, const Config & config);
 
 		/**
 		* @breif Destructor
@@ -90,12 +88,6 @@ namespace dof
 		virtual void Stop();
 
 		/**
-		* @breif Get name of service.
-		*
-		*/
-		virtual const std::string & GetName() const;
-
-		/**
 		* @breif Get transport layer protocol.
 		*
 		*/
@@ -106,36 +98,6 @@ namespace dof
 		*
 		*/
 		virtual Network::Protocol::eApplication GetApplicationProtocol() const;
-
-		/**
-		* @breif Get host address.
-		*
-		*/
-		virtual const Network::Address & GetHost() const;
-
-		/**
-		* @breif Get host port.
-		*
-		*/
-		virtual unsigned short GetPort() const;
-
-		/**
-		* @breif Get communication port of nodes.
-		*
-		*/
-		virtual unsigned short GetMonitorPort() const;
-
-		/**
-		* @breif Session timeout. 0 if sessioning is disabled.
-		*
-		*/
-		virtual unsigned short GetSessionTimeout() const;
-
-		/**
-		* @breif Get number of max concurrent connections.
-		*
-		*/
-		virtual unsigned short GetMaxConnections() const;
 
 		/**
 		* @breif Associate node with service.
@@ -161,21 +123,22 @@ namespace dof
 		*/
 		virtual void GetNodes(std::set<Node *> & nodes);
 
-
 	private:
+
+		typedef std::map<Network::Socket::Handle, TcpPeer *> PeerMap;
 
 		/**
 		* @breif Copy constructor.
 		*
 		*/
 		TcpService(const TcpService & service);
-
-		std::string					m_Name;				///< Name of service.
-		Network::Address			m_Host;				///< Host address.
-		unsigned short				m_Port;				///< Host port.
-		unsigned short				m_MonitorPort;		///< Monitoring port of nodes.
-		unsigned int				m_MaxConnections;	///< Max concurrent connections.
-		unsigned int				m_SessionTimeout;	///< Session timeout in seconds.
+		
+		Safe<bool>					m_Started;			///< Flag indicating the servicer is started.
+		std::thread *				m_pThread;			///< Main thread.
+		Balancer *					m_pBalancer;		///< Balancer.
+		MemoryPool<char> *			m_pMemoryPool;		///< Memory pool for incoming data.
+		Network::TcpSocket			m_ListenSocket;		///< Socket for connection listening.
+		PeerMap						m_Peers;			///< Map of conneced peers, socket handle as key.
 
 	};
 

@@ -27,6 +27,7 @@
 
 #include <Service.hpp>
 #include <Node.hpp>
+#include <Balancer.hpp>
 #include <Network.hpp>
 #include <Safe.hpp>
 #include <Semaphore.hpp>
@@ -304,6 +305,12 @@ namespace dof
 		void LoadConfigNode(Yaml::Node & node, Service * service, const unsigned int index, const unsigned int service_index);
 
 		/**
+		* @breif Load default configurations of services.
+		*
+		*/
+		void LoadDefaultServiceConifg(Yaml::Node & server);
+
+		/**
 		* @breif Get the next service name available.
 		*
 		*/
@@ -318,13 +325,6 @@ namespace dof
 		/**
 		* @breif Create new service by given protocol and parameters.
 		*
-		* @param name				Name of service.
-		* @param host				Host address.
-		* @param port				Host port.
-		* @param monitorPort		Monitoring port of nodes.
-		* @param sessionTimeout		Session time in seconds. 0 if sessioning is disabled.
-		* @param maxConnections		Max concurrent connections. Not used if protocol = Udp.
-		*
 		* @throw Exception If arguments are invalid.
 		*
 		* @return Pointer to service, nullptr if failed.
@@ -332,18 +332,16 @@ namespace dof
 		*/
 		Service * CreateService(const Network::Protocol::eTransport transportProtocol,
 								const Network::Protocol::eApplication applicationProtocol,
-								const std::string & name,
-								const Network::Address & host,
-								const unsigned short port,
-								const unsigned short monitorPort,
-								const unsigned int sessionTimeout,
-								const unsigned int maxConnections);
+								const Service::Config & config);
+
+		
 
 		typedef std::tuple< Network::Address,
 							unsigned short,
 							Network::Protocol::eTransport,
 							Network::Protocol::eApplication> HostTuple;
 
+		Service::Config									m_DefaultServiceConfig;		///< Default settings of services.
 		unsigned short									m_InterprocessPort;			///< Port for inter-process communication with Doforward server.
 		unsigned int									m_MaxConnections;			///< Max concurrent connections.
 

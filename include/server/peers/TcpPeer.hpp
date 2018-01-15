@@ -25,22 +25,23 @@
 
 #pragma once
 
-#include <Balancer.hpp>
-#include <Safe.hpp>
-#include <map>
-#include <set>
+#include <Peer.hpp>
 
 namespace dof
 {
 
 	/**
-	* @breif Balancer using connection count algorithm.
-	*		 Less connections, first out.
-	*
-	* @see Balancer
+	* @breif Forward declarations.
 	*
 	*/
-	class ConnectionCountBalancer : public Balancer
+	namespace Network { class TcpSocket; };
+
+
+	/**
+	* @breif Peer, communicating over TCP.
+	*
+	*/
+	class TcpPeer : public Peer
 	{
 
 	public:
@@ -49,64 +50,29 @@ namespace dof
 		* @breif Constructor.
 		*
 		*/
-		ConnectionCountBalancer(Service * service);
+		TcpPeer(Network::TcpSocket * socket, Node * node, Session * session);
 
 		/**
 		* @breif Destructor.
 		*
 		*/
-		~ConnectionCountBalancer();
+		~TcpPeer();
 
 		/**
-		* @breif Get algorithm of balancer.
+		* @breif Get tcp socket of peer..
 		*
 		*/
-		virtual eAlgorithm GetAlgoritm() const;
+		Network::TcpSocket * GetSocket() const;
 
 		/**
-		* @breif Get next suitable node.
-		*
-		* @param peer Pointer to peer if available, else nullptr.
-		*
-		* @return pointer to next node, nullptr if queue is empty.
+		* @breif Get type of peer.
 		*
 		*/
-		virtual Node * GetNext(Peer * peer = nullptr);
-
-		/**
-		* @breif Associate node with balancer.
-		*
-		* @throw Exception if node is nullptr.
-		*
-		*/
-		virtual void Associate(Node * node);
-
-		/**
-		* @breif Detatch node from balancer.
-		*
-		* @throw Exception if node is nullptr.
-		*
-		*/
-		virtual void Detatch(Node * node);
-
-		/**
-		* @breif Detatch all nodes from balancer.
-		*
-		*/
-		virtual void DetatchAll();
-
-		/**
-		* @breif Copy nodes to given balancer.
-		*
-		* @throw Exception if balancer is nullptr.
-		*
-		*/
-		virtual size_t Copy(Balancer * balancer);
+		virtual Network::Protocol::eTransport GetType() const;
 
 	private:
 
-		Safe<std::map<unsigned int, Node *>>	m_NodeMap;	///< Map of nodes.
-		Safe<std::set<Node *>>					m_NodeSet;	///< Set of all nodes.
+		Network::TcpSocket * m_pSocket;	///< Tcp socket of peer.
 
 	};
 

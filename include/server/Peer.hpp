@@ -25,22 +25,20 @@
 
 #pragma once
 
-#include <Balancer.hpp>
 #include <Safe.hpp>
-#include <map>
-#include <set>
+#include <Network.hpp>
 
 namespace dof
 {
 
+	class Session;
+	class Node;
+
 	/**
-	* @breif Balancer using connection count algorithm.
-	*		 Less connections, first out.
-	*
-	* @see Balancer
+	* @breif Peer(client) communicating with service.
 	*
 	*/
-	class ConnectionCountBalancer : public Balancer
+	class Peer
 	{
 
 	public:
@@ -49,64 +47,44 @@ namespace dof
 		* @breif Constructor.
 		*
 		*/
-		ConnectionCountBalancer(Service * service);
+		Peer(Node * node, Session * session);
 
 		/**
 		* @breif Destructor.
 		*
 		*/
-		~ConnectionCountBalancer();
+		~Peer();
 
 		/**
-		* @breif Get algorithm of balancer.
+		* @breif Get type of peer.
 		*
 		*/
-		virtual eAlgorithm GetAlgoritm() const;
+		virtual Network::Protocol::eTransport GetType() const = 0;
 
 		/**
-		* @breif Get next suitable node.
+		* @breif Get pointer to session.
 		*
-		* @param peer Pointer to peer if available, else nullptr.
-		*
-		* @return pointer to next node, nullptr if queue is empty.
+		* @return pointer to session, nullptr if not using session.
 		*
 		*/
-		virtual Node * GetNext(Peer * peer = nullptr);
+		Session * GetSession();
 
 		/**
-		* @breif Associate node with balancer.
-		*
-		* @throw Exception if node is nullptr.
+		* @breif Get pointer to current node.
 		*
 		*/
-		virtual void Associate(Node * node);
+		Node * GetNode();
 
 		/**
-		* @breif Detatch node from balancer.
-		*
-		* @throw Exception if node is nullptr.
+		* @breif Set current node of peer.
 		*
 		*/
-		virtual void Detatch(Node * node);
-
-		/**
-		* @breif Detatch all nodes from balancer.
-		*
-		*/
-		virtual void DetatchAll();
-
-		/**
-		* @breif Copy nodes to given balancer.
-		*
-		* @throw Exception if balancer is nullptr.
-		*
-		*/
-		virtual size_t Copy(Balancer * balancer);
+		void SetNode(Node * node);
 
 	private:
 
-		Safe<std::map<unsigned int, Node *>>	m_NodeMap;	///< Map of nodes.
-		Safe<std::set<Node *>>					m_NodeSet;	///< Set of all nodes.
+		Safe<Node *>	m_pNode;	///< Pointer node.
+		Session *		m_pSession;	///< Pointer to session.
 
 	};
 

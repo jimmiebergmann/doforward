@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include <Time.hpp>
 #include <mutex>
 #include <condition_variable>
 #include <chrono>
@@ -39,13 +40,16 @@ namespace dof
 
 		Semaphore();
 
-		void Notify();
+		void NotifyOne();
+
+		void NotifyAll();
 
 		void Wait();
 
 		bool TryWait();
 
-		bool WaitFor(const unsigned int p_Milliseconds);
+		// Return false if timeout is reached.
+		bool WaitFor(const Time & timeout);
 
 	private:
 

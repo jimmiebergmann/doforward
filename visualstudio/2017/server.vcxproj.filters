@@ -19,6 +19,9 @@
     <Filter Include="server\services">
       <UniqueIdentifier>{8dd2bfb1-c19f-428d-82e3-6e97e64d8c2c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="server\peers">
+      <UniqueIdentifier>{8a7be6be-a19c-4e32-b837-5d4cd24934fa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\mains\ServerApp.cpp">
@@ -78,6 +81,21 @@
     <ClCompile Include="..\..\source\server\Session.cpp">
       <Filter>server</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\server\Peer.cpp">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\common\Time.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\common\Timer.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\server\peers\TcpPeer.cpp">
+      <Filter>server\peers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\server\peers\UdpPeer.cpp">
+      <Filter>server\peers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\common\Exception.hpp">
@@ -136,6 +154,27 @@
     </ClInclude>
     <ClInclude Include="..\..\include\server\Session.hpp">
       <Filter>server</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\server\Peer.hpp">
+      <Filter>server</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\common\Time.hpp">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\common\Timer.hpp">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\server\peers\TcpPeer.hpp">
+      <Filter>server\peers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\server\peers\UdpPeer.hpp">
+      <Filter>server\peers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\common\WindowsHeaders.hpp">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\common\MemoryPool.hpp">
+      <Filter>common</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

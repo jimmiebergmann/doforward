@@ -23,79 +23,35 @@
 *
 */
 
-#include <Service.hpp>
+#include <Peer.hpp>
 
 namespace dof
 {
 
-	// Service config struct
-	Service::Config::Config() :
-		Name(""),
-		Host(0),
-		Port(0),
-		BufferInfo(),
-		BalancerAlgorithm(Balancer::RoundRobin),
-		SessionTimeout(Microseconds(0)),
-		MaxConnections(1024)
-	{
-
-	}
-
-	Service::Config::Buffer::Buffer() :
-		Size(8192),
-		PoolCount(10),
-		PoolMaxCount(10),
-		PoolReserveCount(1),
-		PoolAllocationCount(3)
-	{
-
-	}
-
-	// Service class
-	Service::Service(Server & server,
-					 const Config & config) :
-		m_Server(server),
-		m_Config(config)
-	{
-	};
-
-	Service::~Service()
+	Peer::Peer(Node * node, Session * session) :
+		m_pNode(node),
+		m_pSession(session)
 	{
 	}
 
-	Server & Service::GetServer() const
+	Peer::~Peer()
 	{
-		return m_Server;
 	}
 
-	const Service::Config & Service::GetConfig() const
+	Session * Peer::GetSession()
 	{
-		return m_Config;
+		return m_pSession;
 	}
 
-	const std::string & Service::GetName() const
+	Node * Peer::GetNode()
 	{
-		return m_Config.Name;
+		SafeGuard sf(m_pNode);
+		return m_pNode.Value;
 	}
 
-	const Network::Address & Service::GetHost() const
+	void Peer::SetNode(Node * node)
 	{
-		return m_Config.Host;
-	}
-
-	unsigned short Service::GetPort() const
-	{
-		return m_Config.Port;
-	}
-
-	const Time & Service::GetSessionTimeout() const
-	{
-		return m_Config.SessionTimeout;
-	}
-
-	unsigned short Service::GetMaxConnections() const
-	{
-		return m_Config.MaxConnections;
+		m_pNode.Set(node);
 	}
 
 }

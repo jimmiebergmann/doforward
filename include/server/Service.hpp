@@ -27,6 +27,8 @@
 
 #include <Network.hpp>
 #include <network/Address.hpp>
+#include <Balancer.hpp>
+#include <Time.hpp>
 #include <string>
 #include <set>
 
@@ -51,12 +53,54 @@ namespace dof
 	public:
 
 		/**
+		* @breif Service configuration structure.
+		*
+		*/
+		struct Config
+		{
+
+			/**
+			* @breif Default constructor.
+			*
+			*/
+			Config();
+
+			/**
+			* @breif Service buffer configuration structure.
+			*
+			*/
+			struct Buffer
+			{
+				/**
+				* @breif Default constructor.
+				*
+				*/
+				Buffer();
+
+				unsigned int		Size;					///< Buffer size of each pool node.
+				unsigned int		PoolCount;				///< Number of pool nodes preallocated.
+				unsigned int		PoolMaxCount;			///< Maximum number of allocated pool nodes.
+				unsigned int		PoolReserveCount;		///< Number of reserve pool nodes.
+				unsigned int		PoolAllocationCount;	///< Number of nodes allocated at a time.
+			};
+
+			std::string 			Name;					///< Name of service.
+			Network::Address		Host;					///< Host address of service.
+			unsigned short			Port;					///< Name port of service.
+			Buffer					BufferInfo;				///< Information about buffering.
+			Balancer::eAlgorithm	BalancerAlgorithm;		///< Balancing algorithm used for selecting nodes.
+			Time 					SessionTimeout;			///< Timeout of session. Zero if not using sessions.
+			unsigned int			MaxConnections;			///< Maximum number of connections. Zero if no limit.
+
+		};
+
+		/**
 		* @breif Constructor.
 		*
 		* @param server Reference to server.
 		*
 		*/
-		Service(Server & server);
+		Service(Server & server, const Config & config);
 
 		/**
 		* @breif Destructor
@@ -69,6 +113,12 @@ namespace dof
 		*
 		*/
 		Server & GetServer() const;
+
+		/**
+		* @breif Get configuration structure.
+		*
+		*/
+		const Config & GetConfig() const;
 
 		/**
 		* @breif Start service.
@@ -89,7 +139,31 @@ namespace dof
 		* @breif Get name of service.
 		*
 		*/
-		virtual const std::string & GetName() const = 0;
+		const std::string & GetName() const;
+
+		/**
+		* @breif Get host address.
+		*
+		*/
+		const Network::Address & GetHost() const;
+
+		/**
+		* @breif Get host port.
+		*
+		*/
+		unsigned short GetPort() const;
+
+		/**
+		* @breif Session timeout. Zero time if sessioning is disabled.
+		*
+		*/
+		const Time & GetSessionTimeout() const;
+
+		/**
+		* @breif Get number of max concurrent connections.
+		*
+		*/
+		unsigned short GetMaxConnections() const;
 
 		/**
 		* @breif Get transport layer protocol.
@@ -102,36 +176,6 @@ namespace dof
 		*
 		*/
 		virtual Network::Protocol::eApplication GetApplicationProtocol() const = 0;
-
-		/**
-		* @breif Get host address.
-		*
-		*/
-		virtual const Network::Address & GetHost() const = 0;
-
-		/**
-		* @breif Get host port.
-		*
-		*/
-		virtual unsigned short GetPort() const = 0;
-
-		/**
-		* @breif Get communication port of nodes.
-		*
-		*/
-		virtual unsigned short GetMonitorPort() const = 0;
-
-		/**
-		* @breif Session timeout. 0 if sessioning is disabled.
-		*
-		*/
-		virtual unsigned short GetSessionTimeout() const = 0;
-
-		/**
-		* @breif Get number of max concurrent connections.
-		*
-		*/
-		virtual unsigned short GetMaxConnections() const = 0;
 
 		/**
 		* @breif Associate node with service.
@@ -157,9 +201,10 @@ namespace dof
 		*/
 		virtual void GetNodes(std::set<Node *> & nodes) = 0;
 		
-	private:
+	protected:
 
 		Server &	m_Server;	///< Reference to server.
+		Config		m_Config;	///< Configuration structure.
 
 	};
 
