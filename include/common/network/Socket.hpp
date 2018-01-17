@@ -23,7 +23,7 @@
 *
 */
 
-#pragma 
+#pragma once
 
 #include <Network.hpp>
 #include <WindowsHeaders.hpp>

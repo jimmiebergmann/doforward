@@ -25,6 +25,7 @@
 
 #include <services/TcpService.hpp>
 #include <network/TcpSocket.hpp>
+#include <network/Poller.hpp>
 #include <peers/TcpPeer.hpp>
 #include <balancers/ConnectionCountBalancer.hpp>
 #include <balancers/RoundRobinBalancer.hpp>
@@ -81,68 +82,57 @@ namespace dof
 		m_Started = true;
 		m_pThread = new std::thread([this]()
 		{
-			fd_set		socketSet;
-			int			maxFD = 0;
-			int			currentFD = 0;
-			const int	listenSocket = static_cast<int>(m_ListenSocket.GetHandle());
-			int			newSocket = 0;
-			struct timeval timeout = { 1, 0 };
+			Network::Socket::Handle listenHandle = m_ListenSocket.GetHandle();
+			Network::Socket::Handle	newHandle = 0;
 
+			Network::Poller poller(m_Config.MaxConnections);
+			poller.Add(listenHandle);
+
+			// Run while serivce is running.
 			while (m_Started.Get())
 			{
-				/// SHOULD BE OPTIMIZED AND NOT CALCULATED EVERY LOOP?
+				// Poll sockets
+				std::vector<Network::Socket::Handle> polls;
+				poller.Poll(polls, Seconds(10000.0f));
 
-				// Create set of this loop
-				FD_ZERO(&socketSet);
-				FD_SET(listenSocket, &socketSet);
-				maxFD = listenSocket;
-				for (auto it = m_Peers.begin(); it != m_Peers.end(); it++)
+				// Go through polls
+				for (auto it = polls.begin(); it != polls.end(); it++)
 				{
-					currentFD = static_cast<int>(it->first);
-					FD_SET(currentFD, &socketSet);
-					if (currentFD > maxFD)
+					Network::Socket::Handle handle = *it;
+
+					// New connection
+					if (handle == listenHandle)
 					{
-						maxFD = currentFD;
-					}
-				}
+						if ((newHandle = accept(listenHandle, NULL, NULL)) < 0)
+						{
+							throw new Exception(Exception::Network, "Failed to accept socket. Error no. " + std::to_string(GetLastError()));
+						}
 
-				// Select from socket set.
-				int activity = select(maxFD + 1, &socketSet, NULL, NULL, &timeout);
-				if (activity == 0) // Timeout.
-				{
-					
-					continue;
-				}
-				if (activity < 0) // Error.
-				{
-					throw new Exception(Exception::Network, "Failed to select socket. Error no. " + std::to_string(GetLastError()));
-				}
+						Node * pNode = m_pBalancer->GetNext();
 
-				// Check for new connection.
-				if (FD_ISSET(listenSocket, &socketSet))
-				{
-					if ((newSocket = accept(listenSocket, NULL, NULL)) < 0)
-					{
-						throw new Exception(Exception::Network, "Failed to accept socket. Error no. " + std::to_string(GetLastError()));
-					}					
-				}
+						// Create and add peer.
+						Network::TcpSocket * pNewSocket = new Network::TcpSocket(newHandle, Network::TcpSocket::Peer);
+						m_Peers.insert({ newHandle, new TcpPeer(pNewSocket, pNode, nullptr) });
+						poller.Add(newHandle);
 
-				// Check activity on connections.
-				for (auto it = m_Peers.begin(); it != m_Peers.end();)
-				{
-					// Check if we got any activity on current peer.
-					currentFD = static_cast<int>(it->first);
-					if (!FD_ISSET(currentFD, &socketSet))
-					{
-						++it;
+						std::cout << "Peer connected." << std::endl;
+
 						continue;
 					}
 
-					TcpPeer * pPeer = it->second;
+					// Peer activity
+					// Get peer.
+					TcpPeer * pPeer = nullptr;
+					auto peerIt = m_Peers.find(handle);
+					if (peerIt == m_Peers.end())
+					{
+						throw new Exception(Exception::Network, "Polled unknown socket.");
+					}
+					pPeer = peerIt->second;
 
-					// Pool pool node.
-					MemoryPool<char>::Node * pNode = m_pMemoryPool->Poll(Seconds(1.0f));
-					if (pNode == nullptr)
+					// Get new memory pool node.
+					MemoryPool<char>::Node * pMemory = m_pMemoryPool->Poll(Seconds(1.0f));
+					if (pMemory == nullptr)
 					{
 						std::cout << "Memory pool timeout." << std::endl;
 						continue;
@@ -150,14 +140,15 @@ namespace dof
 
 					// Receive data.
 					int valRead = 0;
-					if ((valRead = recv(currentFD, pNode->Get(), pNode->Size(), 0)) == 0)
+					if ((valRead = recv(handle, pMemory->Get(), pMemory->Size(), 0)) == 0)
 					{
 						// Disconnection
 						std::cout << "Peer disconnected." << std::endl;
 
-						// Erase peer and nove to next iterator.
-						it = m_Peers.erase(it);
+						// Erase peer and nove to next poll.
+						m_Peers.erase(peerIt);
 						delete pPeer;
+						poller.Remove(handle);
 						continue;
 					}
 
@@ -168,30 +159,10 @@ namespace dof
 					}
 
 					// Print received data.
-					pNode->Get()[valRead] = 0;
-					std::cout << "Recv data: " << pNode->Get() << std::endl;
+					pMemory->Get()[valRead] = 0;
+					std::cout << "Recv data: " << pMemory->Get() << std::endl;
 
-					m_pMemoryPool->Return(pNode);
-
-					// Move to next iterator.
-					++it;
-				}
-
-				// Add connection socket and create peer.
-				if (newSocket != 0)
-				{
-					const Network::Socket::Handle socketHandle = static_cast<Network::Socket::Handle>(newSocket);
-					newSocket = 0;
-					
-					// Select node from balancer.
-					Node * pNode = m_pBalancer->GetNext();
-
-					// Create and add peer.
-					Network::TcpSocket * pNewSocket = new Network::TcpSocket(socketHandle, Network::TcpSocket::Peer);
-					TcpPeer * pNewPeer = new TcpPeer(pNewSocket, pNode, nullptr);
-					m_Peers.insert({ socketHandle, pNewPeer });
-					
-					std::cout << "Peer connected." << std::endl;
+					m_pMemoryPool->Return(pMemory);
 				}
 
 			}

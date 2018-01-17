@@ -174,6 +174,7 @@
     <ClInclude Include="..\..\include\common\MemoryPool.hpp" />
     <ClInclude Include="..\..\include\common\Network.hpp" />
     <ClInclude Include="..\..\include\common\network\Address.hpp" />
+    <ClInclude Include="..\..\include\common\network\Poller.hpp" />
     <ClInclude Include="..\..\include\common\network\Socket.hpp" />
     <ClInclude Include="..\..\include\common\network\TcpListener.hpp" />
     <ClInclude Include="..\..\include\common\network\TcpSocket.hpp" />

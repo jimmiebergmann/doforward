@@ -176,5 +176,8 @@
     <ClInclude Include="..\..\include\common\MemoryPool.hpp">
       <Filter>common</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\common\network\Poller.hpp">
+      <Filter>common\network</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
