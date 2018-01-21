@@ -157,7 +157,13 @@ namespace dof
 				*/
 				void CreateAlertSocket();
 
-				Safe<bool>					m_Running;		///< Flag to indicate if thread is running.
+				/**
+				* @breif Renew alert socket.
+				*
+				*/
+				void RenewAlertSocket();
+
+				std::atomic<bool>			m_Running;		///< Flag to indicate if thread is running.
 				std::thread *				m_pThread;		///< Worker thread.
 				Function &					m_Function;		///< Poller function, called when new events are handled.
 
@@ -170,7 +176,7 @@ namespace dof
 
 			};
 			
-			Safe<std::map<size_t, Worker *>>			m_WorkerMap;			///< Map of workers, key = count of sockets in worker.
+			Safe<std::multimap<size_t, Worker *>>		m_WorkerMap;			///< Map of workers, key = count of sockets in worker.
 			Safe<std::map<Socket::Handle, Worker *>>	m_SocketAssociationMap;	///< Map of all sockets and their associated workers.
 			Function									m_Function;				///< Function handling polled events.
 			const size_t								m_MaxSocketCount;		///< Maximum count of sockets.

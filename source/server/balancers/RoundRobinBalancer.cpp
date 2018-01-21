@@ -50,8 +50,9 @@ namespace dof
 
 		if (m_NodeList.Value.size())
 		{
-			Node * pNode = m_NodeList.Value.front();;
+			Node * pNode = m_NodeList.Value.front();
 			m_NodeList.Value.pop_front();
+			m_NodeList.Value.push_back(pNode);
 			return pNode;
 		}
 

@@ -26,7 +26,17 @@
 #include <Network/Poller.hpp>
 #include <System.hpp>
 #include <Exception.hpp>
+#include <iostream>
 
+#if defined(DOF_PLATFORM_WINDOWS)
+#define DOF_HAVE_SELECT 1
+#define DOF_HAVE_POLL 0
+#elif defined(DOF_PLATFORM_LINUX)
+#define DOF_HAVE_SELECT 0
+#define DOF_HAVE_POLL 1
+#else
+#error Select or Poll is not available.
+#endif
 
 static size_t GetMaxWorkerSize(const size_t maxSocketCount, const size_t requestedWorkerSize, const size_t minWorkerCount);
 static size_t GetMaxWorkerCount(const size_t maxSocketCount, const size_t requestedWorkerSize, const size_t minWorkerCount);
@@ -81,7 +91,7 @@ namespace dof
 			// Get next worker
 			Worker * pWorker = nullptr;
 			size_t socketCountInCurrentWorker = 0;
-			const size_t socketCount = m_SocketAssociationMap.Value.size() + 1;
+			const size_t socketCount = m_SocketAssociationMap.Value.size();
 			const size_t workerCount = m_WorkerMap.Value.size();
 			const size_t levelSize = m_WorkerSize / m_MaxWorkerCount;
 			const size_t currentWorkerLimit = workerCount * workerCount * levelSize;
@@ -113,7 +123,19 @@ namespace dof
 
 		void Poller::Remove(const Socket::Handle handle)
 		{
+			SafeGuard sf1(m_WorkerMap);
+			SafeGuard sf2(m_SocketAssociationMap);
 
+			// Exit if handle is unknown.
+			auto saIt = m_SocketAssociationMap.Value.find(handle);
+			if (saIt == m_SocketAssociationMap.Value.end())
+			{
+				return;
+			}
+
+			Worker * pWorker = saIt->second;
+			pWorker->Remove(handle);
+			m_SocketAssociationMap.Value.erase(handle);
 		}
 
 		Poller::Worker::Worker(Function & function) :
@@ -127,9 +149,9 @@ namespace dof
 
 			m_pThread = new std::thread([this]()
 			{
-				while (m_Running.Get())
+				while (m_Running)
 				{
-					timeval timeout = { 1, 0 };
+#if DOF_HAVE_SELECT
 					fd_set readFDs;
 					fd_set writeFDs;
 					int maxFDs = 0;
@@ -162,16 +184,18 @@ namespace dof
 					m_SetMutex.unlock();
 
 					// Select
-					int count = select(maxFDs, &readFDs, &writeFDs, NULL, &timeout);
-					if (count == 0 || (count == 1 && FD_ISSET(m_AlertSocket, &readFDs)) || m_Running.Get() == false)
+					int count = select(maxFDs, &readFDs, &writeFDs, NULL, NULL);
+					if (count == 0 || m_Running == false)
 					{
-						SafeGuard alterGuard(m_Alerted);
-						if (m_Alerted.Value == true)
-						{
-							CreateAlertSocket();
-							m_Alerted.Value = false;
-						}
 						continue;
+					}
+					if (FD_ISSET(m_AlertSocket, &readFDs))
+					{
+						RenewAlertSocket();
+						if (count == 1)
+						{
+							continue;
+						}
 					}
 
 					// Construct vectors of sockets with new events.
@@ -196,7 +220,10 @@ namespace dof
 					}
 
 					m_SetMutex.unlock();
-
+#endif
+#if DOF_HAVE_POLL
+#error Poll is not yet implemented.
+#endif
 					// Call polling function if we got any new events.
 					if (readVec.size() || writeVec.size())
 					{
@@ -237,6 +264,8 @@ namespace dof
 			{
 				m_WriteSet.insert(handle);
 			}
+
+			Alert();
 		}
 
 		void Poller::Worker::Remove(const Socket::Handle handle)
@@ -251,7 +280,7 @@ namespace dof
 		{
 			SafeGuard sf(m_Alerted);
 
-			if (m_Alerted.Value)
+			if (m_Alerted.Value == true)
 			{
 				return;
 			}
@@ -266,6 +295,16 @@ namespace dof
 			if (m_AlertSocket == INVALID_SOCKET)
 			{
 				throw new Exception(Exception::InvalidPointer, "Failed to create alert socket.");
+			}
+		}
+
+		void Poller::Worker::RenewAlertSocket()
+		{
+			SafeGuard alterGuard(m_Alerted);
+			if (m_Alerted.Value == true)
+			{
+				CreateAlertSocket();
+				m_Alerted.Value = false;
 			}
 		}
 

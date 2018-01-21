@@ -41,7 +41,9 @@ namespace dof
 		m_Started(false),
 		m_pThread(nullptr),
 		m_pBalancer(nullptr),
-		m_pMemoryPool(nullptr)
+		m_ListenSocket(0),
+		m_pMemoryPool(nullptr),
+		m_pPoller(nullptr)
 	{
 		// Create balancer.
 		if (config.BalancerAlgorithm == Balancer::RoundRobin)
@@ -72,6 +74,7 @@ namespace dof
 		Stop();
 		delete m_pBalancer;
 		delete m_pMemoryPool;
+		delete m_pPoller;
 	}
 
 	void TcpService::Start()
@@ -85,15 +88,70 @@ namespace dof
 			Network::Socket::Handle listenHandle = m_ListenSocket.GetHandle();
 			Network::Socket::Handle	newHandle = 0;
 
-			Network::Poller poller([this](	const std::vector<Network::Socket::Handle> & read,
-											const std::vector<Network::Socket::Handle> & write)
+			// Peer data reader poller
+			// No write events should be sent here
+			m_pPoller = new Network::Poller([this](	const std::vector<Network::Socket::Handle> & read,
+													const std::vector<Network::Socket::Handle> & write)
 			{
-				std::cout << "Poller events: Read: " << read.size() << ", Write: " << write.size() << std::endl;
+				MemoryPool<char>::Node * pMemory = nullptr;
+
+				// Go through all read sockets
+				for (auto it = read.begin(); it != read.end(); it++)
+				{
+					Network::Socket::Handle handle = *it;
+					
+					// Get peer
+					TcpPeer * pPeer = FindPeer(handle);
+					if (pPeer == nullptr)
+					{
+						std::cout << "Peer has been destoryed, ignore current handle." << std::endl;
+						continue;
+					}
+
+					// Get new memory pool node.
+					if (pMemory == nullptr)
+					{
+						pMemory = m_pMemoryPool->Poll(Seconds(1.0f));
+						if (pMemory == nullptr)
+						{
+							std::cout << "Memory pool timeout." << std::endl;
+							continue;
+						}
+					}
+
+					// Receive data.
+					int valRead = 0;
+					if ((valRead = recv(handle, pMemory->Get(), pMemory->Size(), 0)) == 0)
+					{
+						// Disconnection
+						std::cout << "Peer disconnected." << std::endl;
+						DestroyPeer(pPeer);
+						continue;
+					}
+
+					// Error
+					if (valRead < 0)
+					{
+						const DWORD lastError = GetLastError();
+						std::cout << "Peer disconnected, unexpectedly, error no. " << lastError << std::endl;
+						DestroyPeer(pPeer);
+						continue;
+					}
+
+					// Print received data.
+					pMemory->Get()[valRead] = 0;
+					std::cout << "Recv data: " << pMemory->Get() << std::endl;
+
+					m_pMemoryPool->Return(pMemory);
+					pMemory = nullptr;
+				}
+
+				if (pMemory != nullptr)
+				{
+					m_pMemoryPool->Return(pMemory);
+				}
 
 			}, m_Config.MaxConnections, 64, 4);
-
-
-			poller.Add(listenHandle);
 
 			// Run while serivce is running.
 			while (m_Started.Get())
@@ -103,92 +161,17 @@ namespace dof
 				if ((newHandle = accept(listenHandle, NULL, NULL)) < 0)
 				{
 					throw new Exception(Exception::Network, "Failed to accept socket. Error no. " + std::to_string(GetLastError()));
-				}
-
-				std::cout << "New connection accepted." << std::endl;
+				}				
 
 				// Create and add peer.
-				Node * pNode = m_pBalancer->GetNext();
-				Network::TcpSocket * pNewSocket = new Network::TcpSocket(newHandle, Network::TcpSocket::Peer);
-				m_Peers.insert({ newHandle, new TcpPeer(pNewSocket, pNode, nullptr) });
-				poller.Add(newHandle, Network::Poller::Read);
-
-
-				// Poll sockets
-				/*std::vector<Network::Socket::Handle> polls;
-				poller.Poll(polls, Seconds(10000.0f));
-
-				// Go through polls
-				for (auto it = polls.begin(); it != polls.end(); it++)
+				if (CreatePeer(newHandle) == nullptr)
 				{
-					Network::Socket::Handle handle = *it;
+					std::cout << "Peer connected, but aborted due to connection limit or no node connected." << std::endl;
+					closesocket(newHandle);
+					continue;
+				}
 
-					// New connection
-					if (handle == listenHandle)
-					{
-						if ((newHandle = accept(listenHandle, NULL, NULL)) < 0)
-						{
-							throw new Exception(Exception::Network, "Failed to accept socket. Error no. " + std::to_string(GetLastError()));
-						}
-
-						
-
-						Node * pNode = m_pBalancer->GetNext();
-
-						// Create and add peer.
-						Network::TcpSocket * pNewSocket = new Network::TcpSocket(newHandle, Network::TcpSocket::Peer);
-						m_Peers.insert({ newHandle, new TcpPeer(pNewSocket, pNode, nullptr) });
-						poller.Add(newHandle);
-
-						std::cout << "Peer connected." << std::endl;
-						continue;
-					}
-
-					// Peer activity
-					// Get peer.
-					TcpPeer * pPeer = nullptr;
-					auto peerIt = m_Peers.find(handle);
-					if (peerIt == m_Peers.end())
-					{
-						throw new Exception(Exception::Network, "Polled unknown socket.");
-					}
-					pPeer = peerIt->second;
-
-					// Get new memory pool node.
-					MemoryPool<char>::Node * pMemory = m_pMemoryPool->Poll(Seconds(1.0f));
-					if (pMemory == nullptr)
-					{
-						std::cout << "Memory pool timeout." << std::endl;
-						continue;
-					}
-
-					// Receive data.
-					int valRead = 0;
-					if ((valRead = recv(handle, pMemory->Get(), pMemory->Size(), 0)) == 0)
-					{
-						// Disconnection
-						std::cout << "Peer disconnected." << std::endl;
-
-						// Erase peer and nove to next poll.
-						m_Peers.erase(peerIt);
-						delete pPeer;
-						poller.Remove(handle);
-						continue;
-					}
-
-					// Error
-					if (valRead < 0)
-					{
-						throw new Exception(Exception::Network, "Failed to recv on socket. Error no. " + std::to_string(GetLastError()));
-					}
-
-					// Print received data.
-					pMemory->Get()[valRead] = 0;
-					std::cout << "Recv data: " << pMemory->Get() << std::endl;
-
-					m_pMemoryPool->Return(pMemory);
-				}*/
-
+				std::cout << "Peer connected and accepted." << std::endl;
 			}
 			
 		});
@@ -198,6 +181,7 @@ namespace dof
 	{
 		m_Started = false;
 		m_ListenSocket.Close();
+		m_ListenSocket = 0;
 		if (m_pThread)
 		{
 			m_pThread->join();
@@ -205,11 +189,13 @@ namespace dof
 			m_pThread = nullptr;
 		}
 
-		for (auto it = m_Peers.begin(); it != m_Peers.end();)
+		m_Peers.Mutex.lock();
+		for (auto it = m_Peers.Value.begin(); it != m_Peers.Value.end();)
 		{
 			TcpPeer * pPeer = it->second;
 			delete pPeer;
 		}
+		m_Peers.Mutex.unlock();
 	}
 	
 	Network::Protocol::eTransport TcpService::GetTransportProtocol() const
@@ -235,6 +221,70 @@ namespace dof
 	void TcpService::GetNodes(std::set<Node *> & nodes)
 	{
 		throw new Exception(Exception::InvalidInput, "Function not yet implemented: TcpService::GetNodes");
+	}
+
+	TcpPeer * TcpService::CreatePeer(const Network::Socket::Handle handle)
+	{
+		SafeGuard sf(m_Peers);
+
+		if (m_Peers.Value.size() == m_Config.MaxConnections)
+		{
+			return nullptr;
+		}
+
+		Node * pNode = m_pBalancer->GetNext();
+		if (pNode == nullptr)
+		{
+			return nullptr;
+		}
+
+		Network::TcpSocket * pNewSocket = new Network::TcpSocket(handle, Network::TcpSocket::Peer);
+		TcpPeer * pTcpPeer = new TcpPeer(pNewSocket, pNode, nullptr);
+		m_Peers.Value.insert({ handle, pTcpPeer });
+		m_pPoller->Add(handle, Network::Poller::Read);
+
+		return pTcpPeer;
+	}
+
+	void TcpService::DestroyPeer(const TcpPeer * peer)
+	{
+		if (peer == nullptr)
+		{
+			throw new Exception(Exception::InvalidInput, "Invalid input, peer is nullptr.");
+		}
+
+		SafeGuard sf(m_Peers);
+
+		const Network::TcpSocket * socket = peer->GetSocket();
+		if (socket == nullptr)
+		{
+			throw new Exception(Exception::InvalidInput, "Invalid peer socket.");
+		}
+
+		const Network::Socket::Handle handle = socket->GetHandle();
+		auto it = m_Peers.Value.find(handle);
+		if (it == m_Peers.Value.end())
+		{
+			throw new Exception(Exception::InvalidInput, "Unknown handle.");
+		}
+
+		// Erase peer
+		m_Peers.Value.erase(it);
+		delete peer;
+		m_pPoller->Remove(handle);
+	}
+
+	TcpPeer * TcpService::FindPeer(const Network::Socket::Handle handle)
+	{
+		SafeGuard sf(m_Peers);
+		
+		auto it = m_Peers.Value.find(handle);
+		if(it == m_Peers.Value.end())
+		{
+			return nullptr;
+		}
+
+		return it->second;
 	}
 
 }

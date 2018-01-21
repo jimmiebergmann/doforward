@@ -29,6 +29,7 @@
 #include <Safe.hpp>
 #include <MemoryPool.hpp>
 #include <network/TcpSocket.hpp>
+#include <network/Poller.hpp>
 #include <Balancer.hpp>
 #include <set>
 #include <map>
@@ -125,7 +126,27 @@ namespace dof
 
 	private:
 
-		typedef std::map<Network::Socket::Handle, TcpPeer *> PeerMap;
+		/**
+		* @breif Create and add new peer by socket handle.
+		*
+		* @return Pointer to new peer. nullptr if not created due to exceeded limit.
+		*
+		*/
+		TcpPeer * CreatePeer(const Network::Socket::Handle handle);
+
+		/**
+		* @breif Destory and remove peer.
+		*
+		*/
+		void DestroyPeer(const TcpPeer * peer);
+
+		/**
+		* @breif Check if peer exists.
+		*
+		* @return Pointer to found peer. nullptr if not found.
+		*
+		*/
+		TcpPeer * FindPeer(const Network::Socket::Handle handle);
 
 		/**
 		* @breif Copy constructor.
@@ -133,12 +154,15 @@ namespace dof
 		*/
 		TcpService(const TcpService & service);
 		
+		typedef std::map<Network::Socket::Handle, TcpPeer *> PeerMap;
+
 		Safe<bool>					m_Started;			///< Flag indicating the servicer is started.
 		std::thread *				m_pThread;			///< Main thread.
 		Balancer *					m_pBalancer;		///< Balancer.
 		MemoryPool<char> *			m_pMemoryPool;		///< Memory pool for incoming data.
 		Network::TcpSocket			m_ListenSocket;		///< Socket for connection listening.
-		PeerMap						m_Peers;			///< Map of conneced peers, socket handle as key.
+		Safe<PeerMap>				m_Peers;			///< Map of conneced peers, socket handle as key.
+		Network::Poller *			m_pPoller;			///< Socket poller.
 
 	};
 
