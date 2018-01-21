@@ -23,41 +23,26 @@
 *
 */
 
-#include <peers/TcpPeer.hpp>
-#include <network/TcpSocket.hpp>
-#include <Node.hpp>
+#pragma once
 
-namespace dof
-{
+/**
+* Define the platform(OS).
+*/
+#if defined( _WIN32 ) || defined( __WIN32__ ) || defined( _WIN64 ) || defined( __WIN64__ )
+#define DOF_PLATFORM_WINDOWS
+#elif defined( linux ) || defined( __linux )
+#define DOF_PLATFORM_LINUX
+#else
+#error No platform is defined
+#endif
 
-	TcpPeer::TcpPeer(Network::TcpSocket * socket, Node * node, Session * session) :
-		Peer(node, session),
-		m_pSocket(socket)
-	{
-		//node->
-	}
+/**
+* Define the build type (release/debug).
+*/
+#if defined( NDEBUG ) || !defined( _DEBUG )
+#define DOF_BUILD_RELEASE
+#else
+#define DOF_BUILD_DEBUG
+#endif
 
-	TcpPeer::~TcpPeer()
-	{
-		if (m_pSocket)
-		{
-			delete m_pSocket;
-		}
-	}
 
-	Network::TcpSocket * TcpPeer::GetSocket() const
-	{
-		return m_pSocket;
-	}
-
-	void TcpPeer::Send(MemoryPool<char>::Node * memory)
-	{
-
-	}
-
-	Network::Protocol::eTransport TcpPeer::GetType() const
-	{
-		return Network::Protocol::Tcp;
-	} 
-
-}

@@ -31,6 +31,7 @@
 #include <Timer.hpp>
 #include <queue>
 #include <thread>
+#include <algorithm>
 
 namespace dof
 {
@@ -163,8 +164,8 @@ namespace dof
 						SafeGuard sf1(m_NodeQueue);
 						SafeGuard sf2(m_ReserveQueue);
 
-						const unsigned int reserveAlloc = std::min(m_AllocationCount, m_ReserveCount - m_ReserveQueue.Value.size());
-						const unsigned int nodeAlloc = std::min(m_AllocationCount - reserveAlloc, m_NodeCount - m_NodeQueue.Value.size());
+						const unsigned int reserveAlloc = std::min<unsigned int>(m_AllocationCount, m_ReserveCount - m_ReserveQueue.Value.size());
+						const unsigned int nodeAlloc = std::min<unsigned int>(m_AllocationCount - reserveAlloc, m_NodeCount - m_NodeQueue.Value.size());
 
 						for (unsigned int i = 0; i < reserveAlloc; i++)
 						{

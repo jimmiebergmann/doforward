@@ -26,6 +26,7 @@
 #pragma once
 
 #include <Peer.hpp>
+#include <MemoryPool.hpp>
 
 namespace dof
 {
@@ -63,6 +64,12 @@ namespace dof
 		*
 		*/
 		Network::TcpSocket * GetSocket() const;
+
+		/**
+		* @breif Send data to peer.
+		*
+		*/
+		void Send(MemoryPool<char>::Node * memory);
 
 		/**
 		* @breif Get type of peer.

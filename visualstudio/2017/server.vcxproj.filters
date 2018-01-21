@@ -96,6 +96,9 @@
     <ClCompile Include="..\..\source\server\peers\UdpPeer.cpp">
       <Filter>server\peers</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\common\network\Poller.cpp">
+      <Filter>common\network</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\common\Exception.hpp">
@@ -178,6 +181,9 @@
     </ClInclude>
     <ClInclude Include="..\..\include\common\network\Poller.hpp">
       <Filter>common\network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\common\System.hpp">
+      <Filter>common</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

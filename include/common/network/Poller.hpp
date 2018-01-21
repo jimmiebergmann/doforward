@@ -25,14 +25,13 @@
 
 #pragma once
 
-#include <Network.hpp>
-#include <Time.hpp>
-#include <Exception.hpp>
 #include <network/Socket.hpp>
-#include <initializer_list>
+#include <Safe.hpp>
+#include <map>
 #include <vector>
 #include <set>
-#include <string>
+#include <functional>
+#include <atomic>
 
 namespace dof
 {
@@ -41,8 +40,11 @@ namespace dof
 	{
 
 		/**
-		* @breif The poller class is used for polling new read events on sockets.
-		*		 Limit of socket count is defined by user, makes it possible to exceed select() limits.
+		* @breif The poller class is used for polling new read/write events of sockets
+		*		 without any limit of socket count. By using multiple threads to select/poll events,
+		*		 the procedure of polling is way faster for multicore processors.
+		*		 The maximum count of sockets per thread is defined by user, or clamped by system limitations.
+		*		 Win32 systems will use select() for polling, linux will use poll().
 		*
 		*/
 		class Poller
@@ -51,155 +53,129 @@ namespace dof
 		public:
 
 			/**
+			* @breif Enumeration of polling events.
+			*
+			*/
+			enum eEvents
+			{
+				Read = 1,
+				Write = 2
+			};
+
+			/**
+			* @breif Polling function.
+			*
+			* @param #1 Vector of read events of sockets.
+			* @param #2 Vector of write events of sockets.
+			*
+			*/
+			typedef std::function<void(	const std::vector<Socket::Handle> &,
+										const std::vector<Socket::Handle> &)> Function;
+
+			/**
 			* @breif Constructor.
+			*		 Starting threads and polling immidiate after construction.
 			*
-			* @param size		Size of socket set. Maximum number of sockets in poller.
-			* @param handles	List of sockets to initially add to poller.
+			* @param function			Pointer to function, executed when new read/write events are available
+			* @param maxSocketCount		Maximum number of sockets in poller.
+			* @param workerSize			Maximum number of sockets in each worker.
+			*							Clamped by system limitations and minWorkerCount if needed.
+			* @param minWorkerCount		Minimum worker count when socketsCount = maxSocketCount.
+			*							Clamped by maxSocketCount and workerSize.
 			*
 			*/
-			Poller(const size_t size, const std::initializer_list<Socket::Handle> & handles = {}) :
-				m_MaxSize(size),
-				m_SetSize(0),
-				m_pSet(new pollfd[size])
-			{
-				for (auto it = handles.begin(); it != handles.end(); it++)
-				{
-					Add(*it);
-				}
-				m_SetSize = handles.size();
-			}
+			Poller(	const Function & function,
+					const size_t maxSocketCount,
+					const size_t workerSize,
+					const size_t minWorkerCount);
 
 			/**
-			* @breif Destructor.
+			* @breif Destructor
 			*
 			*/
-			~Poller()
-			{
-				delete m_pSet;
-			}
+			~Poller();
 
 			/**
-			* @breif Poll read events of sockets in poller set.
-			*
-			* @param polled		Vector of polled sockets.
-			* @param timeout	Time until function timeout.
-			*
-			* @return number of polled sockets. < 0 if error.
+			* @breif Add new socket to poller.
 			*
 			*/
-			size_t Poll(std::vector<Socket::Handle> & polled, const Time & timeout = Time::Infinite)
-			{
-				Compress();
-
-				int finalTimeout = 0;
-				if (timeout.AsMilliseconds() > 2147483647ULL)
-				{
-					finalTimeout = -1;
-				}
-				else
-				{
-					finalTimeout = static_cast<int>(timeout.AsMilliseconds());
-				}
-
-				int count = WSAPoll(m_pSet, m_SetSize, finalTimeout);
-				if (count)
-				{
-					polled.reserve(count);
-					for (size_t i = 0; i < m_SetSize; i++)
-					{
-						if (m_pSet[i].revents & (POLLIN | POLLHUP))
-						{
-							polled.push_back(m_pSet[i].fd);
-						}
-					}
-				}
-
-				if (count < 0)
-				{
-					throw new Exception(Exception::InvalidInput, "Poll failed: Error no. " + std::to_string(WSAGetLastError()));
-				}
-
-				return count;
-			}
+			void Add(const Socket::Handle handle, const unsigned int events = Read|Write);
 
 			/**
-			* @breif Add socket to poller set.
+			* @breif Remove socket from poller.
 			*
 			*/
-			void Add(Socket::Handle handle)
-			{
-				if (m_SetSize == m_MaxSize)
-				{
-					throw new Exception(Exception::InvalidInput, "Poll set overflow.");
-				}
+			void Remove(const Socket::Handle handle);
 
-				for (size_t i = 0; i < m_SetSize; i++)
-				{
-					if (m_pSet[i].fd == handle)
-					{
-						return;
-					}
-				}
-
-				m_pSet[m_SetSize].events = POLLIN;
-				m_pSet[m_SetSize].fd = handle;
-				m_SetSize++;
-			}
-
-			/**
-			* @breif Remove socket from poller set.
-			*
-			*/
-			void Remove(Socket::Handle handle)
-			{
-				for (size_t i = 0; i < m_SetSize; i++)
-				{
-					if (m_pSet[i].fd == handle)
-					{
-						m_CompressIndices.insert(i);
-					}
-				}
-			}
-			
 		private:
 
 			/**
-			* @breif Compress poller set, removing sockets from set.
+			* @breif Worker class.
+			*		 The poller is constructed by worker classes.
 			*
 			*/
-			void Compress()
+			class Worker
 			{
-				if (m_CompressIndices.size() == 0)
-				{
-					return;
-				}
 
-				if (m_SetSize == 1)
-				{
-					m_SetSize = 0;
-					m_CompressIndices.clear();
-					return;
-				}
+			public:
 
-				size_t removed = 0;
-				for (auto it = m_CompressIndices.begin(); it != m_CompressIndices.end(); it++)
-				{
-					size_t index = *it - removed;
+				/**
+				* @breif Constructor.
+				*
+				*/
+				Worker(Function & function);
 
-					memcpy(m_pSet + index, m_pSet + index + 1, m_SetSize - index - 1);
+				/**
+				* @breif Destructor
+				*
+				*/
+				~Worker();
 
-					m_SetSize--;
-					removed++;
-				}
+				/**
+				* @breif Add new socket to worker.
+				*
+				*/
+				void Add(const Socket::Handle handle, const unsigned int events);
 
-				m_CompressIndices.clear();
-			}
+				/**
+				* @breif Remove socket from worker.
+				*
+				*/
+				void Remove(const Socket::Handle handle);
 
-			size_t				m_MaxSize;			///< Maxmimum size of size.
-			size_t				m_SetSize;			///< Current set size.
-			pollfd *			m_pSet;				///< Array of poll file descriptors.
-			std::set<size_t>	m_CompressIndices;	///< Set containing indices to move left in array.
+			private:
+
+				/**
+				* @breif Alert polling. Will cause the polling function to exit.
+				*
+				*/
+				void Alert();
+
+				/**
+				* @breif Create alerting socket.
+				*
+				*/
+				void CreateAlertSocket();
+
+				Safe<bool>					m_Running;		///< Flag to indicate if thread is running.
+				std::thread *				m_pThread;		///< Worker thread.
+				Function &					m_Function;		///< Poller function, called when new events are handled.
+
+				std::mutex					m_SetMutex;		///< Mutex for socket sets.
+				std::set<Socket::Handle>	m_ReadSet;		///< Set of read sockets.
+				std::set<Socket::Handle>	m_WriteSet;		///< Set of write sockets.
+
+				Safe<bool>					m_Alerted;		///< Altert flag for polling.
+				Socket::Handle				m_AlertSocket;	///< Socket used for alerting polling.
+
+			};
 			
+			Safe<std::map<size_t, Worker *>>			m_WorkerMap;			///< Map of workers, key = count of sockets in worker.
+			Safe<std::map<Socket::Handle, Worker *>>	m_SocketAssociationMap;	///< Map of all sockets and their associated workers.
+			Function									m_Function;				///< Function handling polled events.
+			const size_t								m_MaxSocketCount;		///< Maximum count of sockets.
+			const size_t								m_MaxWorkerCount;		///< Maximum count of workers.
+			const size_t								m_WorkerSize;			///< Size of each worker.
 
 		};
 

@@ -85,14 +85,37 @@ namespace dof
 			Network::Socket::Handle listenHandle = m_ListenSocket.GetHandle();
 			Network::Socket::Handle	newHandle = 0;
 
-			Network::Poller poller(m_Config.MaxConnections);
+			Network::Poller poller([this](	const std::vector<Network::Socket::Handle> & read,
+											const std::vector<Network::Socket::Handle> & write)
+			{
+				std::cout << "Poller events: Read: " << read.size() << ", Write: " << write.size() << std::endl;
+
+			}, m_Config.MaxConnections, 64, 4);
+
+
 			poller.Add(listenHandle);
 
 			// Run while serivce is running.
 			while (m_Started.Get())
 			{
+				std::cout << "Listen for new connection." << std::endl;
+				// Accept incoming connections.
+				if ((newHandle = accept(listenHandle, NULL, NULL)) < 0)
+				{
+					throw new Exception(Exception::Network, "Failed to accept socket. Error no. " + std::to_string(GetLastError()));
+				}
+
+				std::cout << "New connection accepted." << std::endl;
+
+				// Create and add peer.
+				Node * pNode = m_pBalancer->GetNext();
+				Network::TcpSocket * pNewSocket = new Network::TcpSocket(newHandle, Network::TcpSocket::Peer);
+				m_Peers.insert({ newHandle, new TcpPeer(pNewSocket, pNode, nullptr) });
+				poller.Add(newHandle, Network::Poller::Read);
+
+
 				// Poll sockets
-				std::vector<Network::Socket::Handle> polls;
+				/*std::vector<Network::Socket::Handle> polls;
 				poller.Poll(polls, Seconds(10000.0f));
 
 				// Go through polls
@@ -108,6 +131,8 @@ namespace dof
 							throw new Exception(Exception::Network, "Failed to accept socket. Error no. " + std::to_string(GetLastError()));
 						}
 
+						
+
 						Node * pNode = m_pBalancer->GetNext();
 
 						// Create and add peer.
@@ -116,7 +141,6 @@ namespace dof
 						poller.Add(newHandle);
 
 						std::cout << "Peer connected." << std::endl;
-
 						continue;
 					}
 
@@ -163,25 +187,23 @@ namespace dof
 					std::cout << "Recv data: " << pMemory->Get() << std::endl;
 
 					m_pMemoryPool->Return(pMemory);
-				}
+				}*/
 
 			}
-
+			
 		});
 	}
 
 	void TcpService::Stop()
 	{
 		m_Started = false;
-
+		m_ListenSocket.Close();
 		if (m_pThread)
 		{
 			m_pThread->join();
 			delete m_pThread;
 			m_pThread = nullptr;
 		}
-
-		m_ListenSocket.Close();
 
 		for (auto it = m_Peers.begin(); it != m_Peers.end();)
 		{
