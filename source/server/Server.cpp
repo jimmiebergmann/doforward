@@ -109,6 +109,8 @@ namespace dof
 	void Server::Finish()
 	{
 		m_StopSemaphore.Wait();
+
+		Cleanup();
 	}
 
 	bool Server::AddService(Service * service)
@@ -600,6 +602,19 @@ namespace dof
 		}
 
 		return pService;
+	}
+
+	void Server::Cleanup()
+	{
+		// Delete services.
+		m_Services.Mutex.lock();
+		for (auto it = m_Services.Value.begin(); it != m_Services.Value.end(); it++)
+		{
+			(*it)->Stop();
+			delete *it;
+		}
+		m_Services.Value.clear();
+		m_Services.Mutex.unlock();
 	}
 
 

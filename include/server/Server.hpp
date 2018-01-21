@@ -334,8 +334,12 @@ namespace dof
 								const Network::Protocol::eApplication applicationProtocol,
 								const Service::Config & config);
 
+		/**
+		* @breif Cleanup server and stop all services.
+		*
+		*/
+		void Cleanup();
 		
-
 		typedef std::tuple< Network::Address,
 							unsigned short,
 							Network::Protocol::eTransport,

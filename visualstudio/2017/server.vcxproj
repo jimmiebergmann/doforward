@@ -149,7 +149,6 @@
     <ClCompile Include="..\..\source\common\network\Address.cpp" />
     <ClCompile Include="..\..\source\common\network\Poller.cpp" />
     <ClCompile Include="..\..\source\common\network\Socket.cpp" />
-    <ClCompile Include="..\..\source\common\network\TcpListener.cpp" />
     <ClCompile Include="..\..\source\common\network\TcpSocket.cpp" />
     <ClCompile Include="..\..\source\common\network\UdpSocket.cpp" />
     <ClCompile Include="..\..\source\common\Semaphore.cpp" />
@@ -177,7 +176,6 @@
     <ClInclude Include="..\..\include\common\network\Address.hpp" />
     <ClInclude Include="..\..\include\common\network\Poller.hpp" />
     <ClInclude Include="..\..\include\common\network\Socket.hpp" />
-    <ClInclude Include="..\..\include\common\network\TcpListener.hpp" />
     <ClInclude Include="..\..\include\common\network\TcpSocket.hpp" />
     <ClInclude Include="..\..\include\common\network\UdpSocket.hpp" />
     <ClInclude Include="..\..\include\common\Safe.hpp" />

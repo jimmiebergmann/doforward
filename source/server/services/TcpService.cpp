@@ -85,9 +85,6 @@ namespace dof
 		m_Started = true;
 		m_pThread = new std::thread([this]()
 		{
-			Network::Socket::Handle listenHandle = m_ListenSocket.GetHandle();
-			Network::Socket::Handle	newHandle = 0;
-
 			// Peer data reader poller
 			// No write events should be sent here
 			m_pPoller = new Network::Poller([this](	const std::vector<Network::Socket::Handle> & read,
@@ -153,15 +150,25 @@ namespace dof
 
 			}, m_Config.MaxConnections, 64, 4);
 
-			// Run while serivce is running.
+			// Start listening for connections.
+			Network::Socket::Handle listenHandle = m_ListenSocket.GetHandle();
+			Network::Socket::Handle	newHandle = 0;
+
 			while (m_Started.Get())
 			{
 				std::cout << "Listen for new connection." << std::endl;
+
 				// Accept incoming connections.
-				if ((newHandle = accept(listenHandle, NULL, NULL)) < 0)
+				if ((newHandle = accept(listenHandle, NULL, NULL)) == INVALID_SOCKET)
 				{
+					const DWORD lastError = GetLastError();
+					if (lastError == WSAEINTR || lastError == WSAECONNRESET)
+					{
+						continue;
+					}
+
 					throw new Exception(Exception::Network, "Failed to accept socket. Error no. " + std::to_string(GetLastError()));
-				}				
+				}
 
 				// Create and add peer.
 				if (CreatePeer(newHandle) == nullptr)
